@@ -32,7 +32,8 @@ function HomeLanding() {
 
   useEffect(() => {
     let isMounted = true;
-    fetch('http://localhost:5000/api/health')
+    const API_BASE_URL = import.meta.env.PROD ? "/api" : (import.meta.env.VITE_API_BASE_URL || "/api");
+    fetch(`${API_BASE_URL}/health`)
       .then((res) => {
         if (res.ok) {
           if (isMounted) setIsServerHealthy(true);
@@ -45,7 +46,7 @@ function HomeLanding() {
       })
       .catch(() => {
         if (isMounted) {
-          setServerStatus('Backend server is not running on port 5000');
+          setServerStatus(t('serverNotRunningError', 'Backend server is not running. Please start the backend server and try again.'));
           setIsServerHealthy(false);
         }
       });
@@ -53,7 +54,7 @@ function HomeLanding() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t]);
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">

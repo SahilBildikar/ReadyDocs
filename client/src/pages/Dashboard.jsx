@@ -33,7 +33,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     let isMounted = true;
-    fetch('http://localhost:5000/api/health')
+    const API_BASE_URL = import.meta.env.PROD ? "/api" : (import.meta.env.VITE_API_BASE_URL || "/api");
+
+    fetch(`${API_BASE_URL}/health`)
       .then((res) => {
         if (res.ok) {
           return res.json();
@@ -42,13 +44,13 @@ export default function Dashboard() {
       })
       .then((data) => {
         if (isMounted) {
-          setBackendStatus(data.message || 'Operational');
+          setBackendStatus(data.message || t('allSystemsGo', 'Operational'));
           setIsHealthy(true);
         }
       })
       .catch(() => {
         if (isMounted) {
-          setBackendStatus('Backend unreachable on port 5000');
+          setBackendStatus(t('serverNotRunningError', 'Backend server is not running. Please start the backend server and try again.'));
           setIsHealthy(false);
         }
       });
@@ -56,7 +58,7 @@ export default function Dashboard() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t]);
 
   const hasProfiles = profiles.length > 0;
 
@@ -103,7 +105,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Missing Profile Warning Banner (Requirement: "Create a profile first to start a document checklist.") */}
+        {/* Missing Profile Warning Banner */}
         {!hasProfiles && !isLoading && (
           <div className="mb-8 p-5 sm:p-6 rounded-3xl bg-amber-50 dark:bg-amber-950/50 border-2 border-amber-300 dark:border-amber-700/60 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
@@ -113,7 +115,7 @@ export default function Dashboard() {
                   {t('noProfilesWarning', 'Create a profile first to start a document checklist.')}
                 </h3>
                 <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5 font-medium">
-                  Adding your profile (or a family member's profile) enables safe auto-fill, eligibility validation, and checklist creation.
+                  {t('noProfilesSubtitle', "Adding your profile (or a family member's profile) enables safe auto-fill, eligibility validation, and checklist creation.")}
                 </p>
               </div>
             </div>
@@ -150,7 +152,7 @@ export default function Dashboard() {
                 <select
                   value={activeProfile?.id || ''}
                   onChange={(e) => setActiveProfile(e.target.value)}
-                  className="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
                 >
                   {profiles.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -164,7 +166,7 @@ export default function Dashboard() {
                 to="/profiles"
                 className="px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition"
               >
-                {t('profilesTitle', 'Manage Profiles')} →
+                {t('manageProfilesBtn', 'Manage Profiles')} →
               </Link>
             </div>
           </div>
@@ -175,13 +177,13 @@ export default function Dashboard() {
           <div className="mb-6">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 mb-2">
               <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-              <span>Guided Document Assistant</span>
+              <span>{t('guidedAssistantBadge', 'Guided Document Assistant')}</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
-              What do you want to do?
+              {t('whatDoYouWantToDo', 'What do you want to do?')}
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 font-medium max-w-xl">
-              Select your goal below. Our intelligent assistant will ask a few short questions to prepare your personalized, verified document checklist.
+              {t('whatDoYouWantToDoSubtitle', 'Select your goal below. Our intelligent assistant will ask a few short questions to prepare your personalized, verified document checklist.')}
             </p>
           </div>
 
@@ -196,14 +198,14 @@ export default function Dashboard() {
                   <Building2 className="w-6 h-6" />
                 </div>
                 <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-                  Open a bank account
+                  {t('actionBankTitle', 'Open a bank account')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium leading-relaxed">
-                  Savings, current, or minor accounts for SBI and other major banks.
+                  {t('actionBankDesc', 'Savings, current, or minor accounts for SBI and other major banks.')}
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-xs font-bold text-teal-600 dark:text-teal-400">
-                <span>Start Guide</span>
+                <span>{t('startGuideBtn', 'Start Guide')}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
@@ -218,14 +220,14 @@ export default function Dashboard() {
                   <GraduationCap className="w-6 h-6" />
                 </div>
                 <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-                  Apply for college admission
+                  {t('actionCollegeTitle', 'Apply for college admission')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium leading-relaxed">
-                  UG, PG, diploma eligibility verification for SPPU and universities.
+                  {t('actionCollegeDesc', 'UG, PG, diploma eligibility verification for SPPU and universities.')}
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-xs font-bold text-teal-600 dark:text-teal-400">
-                <span>Start Guide</span>
+                <span>{t('startGuideBtn', 'Start Guide')}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
@@ -240,14 +242,14 @@ export default function Dashboard() {
                   <HeartHandshake className="w-6 h-6" />
                 </div>
                 <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-                  Make an insurance claim
+                  {t('actionInsuranceTitle', 'Make an insurance claim')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium leading-relaxed">
-                  Health hospitalization reimbursement, accidental, or vehicle claim papers.
+                  {t('actionInsuranceDesc', 'Health hospitalization reimbursement, accidental, or vehicle claim papers.')}
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-xs font-bold text-teal-600 dark:text-teal-400">
-                <span>Start Guide</span>
+                <span>{t('startGuideBtn', 'Start Guide')}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
@@ -262,14 +264,14 @@ export default function Dashboard() {
                   <FileText className="w-6 h-6" />
                 </div>
                 <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-                  Upload & check my documents
+                  {t('actionUploadTitle', 'Upload & check my documents')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium leading-relaxed">
-                  Instant Gemini AI document classification, clarity check, and matching.
+                  {t('actionUploadDesc', 'Instant Gemini AI document classification, clarity check, and matching.')}
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-xs font-bold text-teal-600 dark:text-teal-400">
-                <span>Start Guide</span>
+                <span>{t('startGuideBtn', 'Start Guide')}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
@@ -289,7 +291,7 @@ export default function Dashboard() {
               {profiles.length}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {activeProfile ? `Active: ${activeProfile.profile_name}` : 'No active profile'}
+              {activeProfile ? `Active: ${activeProfile.profile_name}` : t('noActiveProfile', 'No active profile')}
             </p>
           </div>
 
@@ -315,7 +317,7 @@ export default function Dashboard() {
                 {t('readyStatus', 'Platform Status')}
               </span>
             </div>
-            <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+            <div className={`text-sm font-bold mt-1 ${isHealthy ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
               {backendStatus}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -328,9 +330,9 @@ export default function Dashboard() {
         <div className="p-5 rounded-3xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-start gap-3 text-amber-900 dark:text-amber-200 text-xs">
           <ShieldCheck className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div>
-            <span className="font-bold">Zero-Knowledge Document Security:</span>
+            <span className="font-bold">{t('privacyNoticeBadge', 'Zero-Knowledge Policy')}:</span>
             <p className="mt-0.5 text-amber-800 dark:text-amber-300 font-medium leading-relaxed">
-              ReadyDocs strictly forbids storing Aadhaar numbers, PAN numbers, bank accounts, passwords, or card details. All profile details belong strictly to your authenticated account.
+              {t('privacyBanner', 'Zero-Knowledge Privacy: We never ask for or store Aadhaar numbers, PAN numbers, bank account numbers, OTPs, or passwords.')}
             </p>
           </div>
         </div>
@@ -338,7 +340,7 @@ export default function Dashboard() {
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-slate-800 py-4 text-center text-xs text-slate-500 dark:text-slate-400">
-        ReadyDocs • Intelligent Document Processing • “One visit is enough.”
+        ReadyDocs • Intelligent Document Processing • “{t('tagline', 'One visit is enough.')}”
       </footer>
     </div>
   );

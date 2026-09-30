@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import PrivacyBanner from '../components/PrivacyBanner';
 import DocumentHelpGuide from '../components/DocumentHelpGuide';
+import { useLanguage } from '../context/LanguageContext';
 import { fetchChecklistById, uploadAndClassifyDocument, deleteDocument, updateChecklistItemStatus } from '../services/checklistApi';
 import { generateChecklistPDF } from '../utils/pdfGenerator';
 import { shareOnWhatsApp, copyChecklistToClipboard } from '../utils/shareUtils';
@@ -34,6 +35,7 @@ import {
 export default function ChecklistDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [checklist, setChecklist] = useState(null);
   const [documents, setDocuments] = useState([]);
@@ -64,7 +66,7 @@ export default function ChecklistDetail() {
       items
     });
     if (success) {
-      showToast('Checklist copied to clipboard!');
+      showToast(t('copiedToast', 'Checklist copied to clipboard!'));
     }
   };
 
@@ -86,7 +88,7 @@ export default function ChecklistDetail() {
       profileName: checklist.profile?.profile_name,
       fullName: checklist.profile?.full_name
     });
-    showToast('PDF downloaded successfully!');
+    showToast(t('pdfDownloadedToast', 'PDF downloaded successfully!'));
   };
 
   const handleStatusUpdated = (updatedItem, updatedChecklist) => {
@@ -103,7 +105,7 @@ export default function ChecklistDetail() {
         }
       });
     }
-    showToast('Document status updated.');
+    showToast(t('documentStatusUpdatedToast', 'Document status updated.'));
   };
 
   // Load checklist details
@@ -242,7 +244,7 @@ export default function ChecklistDetail() {
   };
 
   const handleDeleteDocument = async (docId) => {
-    if (!window.confirm('Are you sure you want to remove this uploaded document?')) return;
+    if (!window.confirm(t('removeDocConfirm', 'Are you sure you want to remove this uploaded document?'))) return;
 
     try {
       await deleteDocument(docId);
@@ -258,7 +260,7 @@ export default function ChecklistDetail() {
         <Navbar />
         <main className="max-w-4xl w-full mx-auto px-4 py-16 text-center">
           <div className="w-10 h-10 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">Loading checklist details...</p>
+          <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">{t('loadingChecklistDetails', 'Loading checklist details...')}</p>
         </main>
       </div>
     );
@@ -271,13 +273,13 @@ export default function ChecklistDetail() {
         <main className="max-w-xl w-full mx-auto px-4 py-16 text-center">
           <div className="p-6 rounded-3xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800">
             <AlertCircle className="w-10 h-10 text-rose-600 dark:text-rose-400 mx-auto mb-3" />
-            <h2 className="text-lg font-bold text-rose-950 dark:text-rose-100">Error Loading Checklist</h2>
+            <h2 className="text-lg font-bold text-rose-950 dark:text-rose-100">{t('errorLoadingChecklist', 'Error Loading Checklist')}</h2>
             <p className="text-xs text-rose-800 dark:text-rose-300 mt-1 mb-4">{error}</p>
             <Link
               to="/checklists"
               className="px-4 py-2 rounded-xl bg-slate-800 text-white text-xs font-semibold"
             >
-              Back to Checklists
+              {t('backToChecklists', 'Back to Checklists')}
             </Link>
           </div>
         </main>
@@ -296,19 +298,19 @@ export default function ChecklistDetail() {
       case 'ready':
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Ready for Visit
+            <CheckCircle2 className="w-3.5 h-3.5" /> {t('readyForVisit', 'Ready for Visit')}
           </span>
         );
       case 'needs_attention':
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-            <AlertCircle className="w-3.5 h-3.5" /> Needs Attention
+            <AlertCircle className="w-3.5 h-3.5" /> {t('needsAttention', 'Needs Attention')}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
-            <Clock className="w-3.5 h-3.5" /> Incomplete ({missingCount} Missing)
+            <Clock className="w-3.5 h-3.5" /> {t('incomplete', 'Incomplete')} ({missingCount} {t('missing', 'Missing')})
           </span>
         );
     }
@@ -319,43 +321,43 @@ export default function ChecklistDetail() {
       case 'matched':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300">
-            <CheckCircle2 className="w-3 h-3" /> Matched
+            <CheckCircle2 className="w-3 h-3" /> {t('matched', 'Matched')}
           </span>
         );
       case 'application_in_progress':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300">
-            <Clock className="w-3 h-3" /> In Progress
+            <Clock className="w-3 h-3" /> {t('inProgress', 'In Progress')}
           </span>
         );
       case 'ready_to_upload':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300">
-            <CheckSquare className="w-3 h-3" /> Ready to Upload
+            <CheckSquare className="w-3 h-3" /> {t('readyToUpload', 'Ready to Upload')}
           </span>
         );
       case 'not_applicable':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-            N/A
+            {t('statusNotApplicable', 'N/A')}
           </span>
         );
       case 'needs_review':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300">
-            <AlertCircle className="w-3 h-3" /> Needs Review
+            <AlertCircle className="w-3 h-3" /> {t('needsReview', 'Needs Review')}
           </span>
         );
       case 'unsupported':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300">
-            <AlertCircle className="w-3 h-3" /> Unsupported
+            <AlertCircle className="w-3 h-3" /> {t('unsupported', 'Unsupported')}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-            <Clock className="w-3 h-3" /> Missing
+            <Clock className="w-3 h-3" /> {t('missing', 'Missing')}
           </span>
         );
     }
@@ -373,7 +375,7 @@ export default function ChecklistDetail() {
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Checklists</span>
+            <span>{t('backToChecklists', 'Back to Checklists')}</span>
           </Link>
 
           {checklist.source_url && (
@@ -383,7 +385,7 @@ export default function ChecklistDetail() {
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-600 dark:text-teal-400 hover:underline"
             >
-              <span>Official Rules Source</span>
+              <span>{t('officialRulesSource', 'Official Rules Source')}</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           )}
@@ -399,7 +401,7 @@ export default function ChecklistDetail() {
                 </span>
                 <span>•</span>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                  Profile: {checklist.profile?.profile_name || 'Assigned Profile'} ({checklist.profile?.full_name || 'Holder'})
+                  {t('profileHolderLabel', 'Profile')}: {checklist.profile?.profile_name || 'Assigned Profile'} ({checklist.profile?.full_name || 'Holder'})
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
@@ -416,7 +418,7 @@ export default function ChecklistDetail() {
                 title="Download printable A4 PDF"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>PDF</span>
+                <span>{t('downloadPdfBtn', 'PDF')}</span>
               </button>
 
               <button
@@ -426,7 +428,7 @@ export default function ChecklistDetail() {
                 title="Share summary on WhatsApp"
               >
                 <Share2 className="w-3.5 h-3.5" />
-                <span>WhatsApp</span>
+                <span>{t('whatsappBtn', 'WhatsApp')}</span>
               </button>
 
               <button
@@ -436,7 +438,7 @@ export default function ChecklistDetail() {
                 title="Copy plain text"
               >
                 <Copy className="w-3.5 h-3.5" />
-                <span>Copy</span>
+                <span>{t('copyBtn', 'Copy')}</span>
               </button>
 
               {getStatusBadge(checklist.status)}
@@ -446,19 +448,19 @@ export default function ChecklistDetail() {
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
             <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Items</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{t('totalItems', 'Total Items')}</span>
               <span className="text-xl font-extrabold text-slate-900 dark:text-white mt-1 block">{items.length}</span>
             </div>
             <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/80">
-              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block">Matched</span>
+              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block">{t('matched', 'Matched')}</span>
               <span className="text-xl font-extrabold text-emerald-800 dark:text-emerald-200 mt-1 block">{matchedCount}</span>
             </div>
             <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/80">
-              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider block">Needs Review</span>
+              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider block">{t('needsReview', 'Needs Review')}</span>
               <span className="text-xl font-extrabold text-amber-800 dark:text-amber-200 mt-1 block">{reviewCount}</span>
             </div>
             <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Missing</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">{t('missing', 'Missing')}</span>
               <span className="text-xl font-extrabold text-slate-700 dark:text-slate-300 mt-1 block">{missingCount}</span>
             </div>
           </div>
@@ -479,10 +481,10 @@ export default function ChecklistDetail() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                    Upload & Classify Document
+                    {t('uploadAndClassify', 'Upload & Classify Document')}
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    PDF, JPG, PNG up to 10 MB
+                    {t('maxFileSizeHint', 'PDF, JPG, PNG up to 10 MB')}
                   </p>
                 </div>
               </div>
@@ -491,14 +493,14 @@ export default function ChecklistDetail() {
                 {/* Target checklist item selector */}
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Match Against Requirement:
+                    {t('matchAgainstLabel', 'Match Against Requirement:')}
                   </label>
                   <select
                     value={targetItemId}
                     onChange={(e) => setTargetItemId(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   >
-                    <option value="">Auto-Detect Requirement (Recommended)</option>
+                    <option value="">{t('autoDetectReq', 'Auto-Detect Requirement (Recommended)')}</option>
                     {items.map(i => (
                       <option key={i.id} value={i.id}>
                         {i.title} {i.status === 'matched' ? '✓' : ''}
@@ -525,10 +527,10 @@ export default function ChecklistDetail() {
                     ) : (
                       <>
                         <span className="text-xs font-bold text-teal-600 dark:text-teal-400">
-                          Click to browse file
+                          {t('clickToBrowseFile', 'Click to browse file')}
                         </span>
                         <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
-                          PDF, JPG, PNG (Max 10 MB)
+                          {t('maxFileSizeHint', 'PDF, JPG, PNG up to 10 MB')}
                         </span>
                       </>
                     )}
@@ -544,12 +546,12 @@ export default function ChecklistDetail() {
                   {isUploading ? (
                     <>
                       <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Gemini Processing...</span>
+                      <span>{t('geminiProcessingBtn', 'Gemini Processing...')}</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      <span>Classify & Verify with Gemini</span>
+                      <span>{t('classifyWithGeminiBtn', 'Classify & Verify with Gemini')}</span>
                     </>
                   )}
                 </button>
@@ -558,7 +560,7 @@ export default function ChecklistDetail() {
               {/* Quick Hackathon Demo Helper: 1-Click Safe Sample Files */}
               <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                  Hackathon Fast-Test (Safe Demo Samples)
+                  {t('fastTestSamplesTitle', 'Hackathon Fast-Test (Safe Demo Samples)')}
                 </span>
                 <div className="grid grid-cols-2 gap-2 text-[11px]">
                   {checklist.service_type === 'sbi_savings' && (
@@ -683,12 +685,12 @@ export default function ChecklistDetail() {
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                 <FileCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                <span>Uploaded Documents ({documents.length})</span>
+                <span>{t('uploadedDocsHeading', 'Uploaded Documents')} ({documents.length})</span>
               </h3>
 
               {documents.length === 0 ? (
                 <p className="text-xs text-slate-500 dark:text-slate-400 italic">
-                  No documents uploaded yet. Upload a sample document above to test Gemini classification.
+                  {t('noDocsUploadedYet', 'No documents uploaded yet. Upload a sample document above to test Gemini classification.')}
                 </p>
               ) : (
                 <div className="space-y-2.5">
@@ -730,15 +732,15 @@ export default function ChecklistDetail() {
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
                 <div>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    Checklist Requirements
+                    {t('checklistReqsTitle', 'Checklist Requirements')}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Match all mandatory items before visiting the branch or submission portal.
+                    {t('checklistReqsDesc', 'Match all mandatory items before visiting the branch or submission portal.')}
                   </p>
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-bold text-teal-600 dark:text-teal-400">
-                    {matchedCount} of {items.length} Ready
+                    {t('readyCount', '{matched} of {total} Ready', { matched: matchedCount, total: items.length })}
                   </span>
                 </div>
               </div>
@@ -777,7 +779,7 @@ export default function ChecklistDetail() {
                               </h4>
                               {item.mandatory && (
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300">
-                                  Mandatory
+                                  {t('mandatoryBadge', 'Mandatory')}
                                 </span>
                               )}
                             </div>
@@ -787,7 +789,7 @@ export default function ChecklistDetail() {
 
                             {/* Acceptable documents note */}
                             <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                              <span className="font-semibold text-slate-700 dark:text-slate-300">Accepted: </span>
+                              <span className="font-semibold text-slate-700 dark:text-slate-300">{t('acceptedPapersLabel', 'Accepted:')} </span>
                               {item.acceptableDocuments?.join(', ')}
                             </div>
 
@@ -795,7 +797,7 @@ export default function ChecklistDetail() {
                             {item.matchedDocumentName && (
                               <div className="mt-2.5 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 flex items-center gap-2">
                                 <FileCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
-                                <span>Attached: <strong>{item.matchedDocumentName}</strong></span>
+                                <span>{t('attachedDocLabel', 'Attached:')} <strong>{item.matchedDocumentName}</strong></span>
                                 {item.detectedType && (
                                   <span className="text-slate-400">({item.detectedType})</span>
                                 )}
@@ -825,7 +827,7 @@ export default function ChecklistDetail() {
                               title="View official step-by-step assistance"
                             >
                               <HelpCircle className="w-3.5 h-3.5" />
-                              <span>How do I get this?</span>
+                              <span>{t('howDoIGetThisBtn', 'How do I get this?')}</span>
                             </button>
                           )}
                         </div>

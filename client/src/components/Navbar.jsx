@@ -81,7 +81,7 @@ export default function Navbar() {
                 }`}
               >
                 <CheckSquare className="w-3.5 h-3.5" />
-                <span>Checklists</span>
+                <span>{t('checklistsNav', 'Checklists')}</span>
               </Link>
 
               <Link
@@ -224,7 +224,7 @@ export default function Navbar() {
                 }`}
               >
                 <CheckSquare className="w-4 h-4" />
-                <span>Checklists</span>
+                <span>{t('checklistsNav', 'Checklists')}</span>
               </Link>
 
               <Link

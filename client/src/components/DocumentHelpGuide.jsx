@@ -26,7 +26,7 @@ export default function DocumentHelpGuide({
   checklistId,
   onStatusUpdated
 }) {
-  const { isSeniorMode } = useLanguage();
+  const { isSeniorMode, language, t } = useLanguage();
   const [guide, setGuide] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -65,7 +65,7 @@ export default function DocumentHelpGuide({
       if (onStatusUpdated) {
         onStatusUpdated(itemId, newStatus);
       }
-      setActionSuccess(`Status updated to "${newStatus.replace(/_/g, ' ')}"`);
+      setActionSuccess(t('documentStatusUpdatedToast', 'Document status updated.'));
       return;
     }
 
@@ -79,7 +79,7 @@ export default function DocumentHelpGuide({
         status: newStatus
       });
 
-      setActionSuccess(`Status updated to "${newStatus.replace(/_/g, ' ')}"`);
+      setActionSuccess(t('documentStatusUpdatedToast', 'Document status updated.'));
       if (onStatusUpdated) {
         onStatusUpdated(res.updatedItem, res.checklist);
       }
@@ -109,12 +109,12 @@ export default function DocumentHelpGuide({
             </div>
             <div>
               <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider block">
-                Official Document Assistance
+                {t('docHelpBadge', 'Official Document Assistance')}
               </span>
               <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white leading-snug">
-                How do I get: {guide?.documentName?.en || itemTitle}
+                {t('howDoIGetTitle', 'How do I get:')} {guide?.documentName?.[language] || guide?.documentName?.en || itemTitle}
               </h2>
-              {guide?.documentName?.mr && (
+              {guide?.documentName && (
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
                   {guide.documentName.hi} • {guide.documentName.mr}
                 </p>
@@ -126,7 +126,7 @@ export default function DocumentHelpGuide({
             type="button"
             onClick={onClose}
             className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
-            title="Close"
+            title={t('closeBtn', 'Close')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -137,7 +137,7 @@ export default function DocumentHelpGuide({
           {isLoading ? (
             <div className="py-12 text-center">
               <div className="w-8 h-8 border-3 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-xs font-semibold text-slate-500">Loading official procedure guidelines...</p>
+              <p className="text-xs font-semibold text-slate-500">{t('loadingGuidelines', 'Loading official procedure guidelines...')}</p>
             </div>
           ) : error ? (
             <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs">
@@ -157,12 +157,12 @@ export default function DocumentHelpGuide({
               {/* 1. Why Needed */}
               <div className="p-4 rounded-2xl bg-teal-50/50 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-800/80">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 block mb-1">
-                  Why this document is required
+                  {t('whyRequiredHeading', 'Why this document is required')}
                 </span>
                 <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
-                  {guide.whyNeeded?.en}
+                  {guide.whyNeeded?.[language] || guide.whyNeeded?.en}
                 </p>
-                {guide.whyNeeded?.mr && (
+                {language === 'en' && guide.whyNeeded?.mr && (
                   <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-medium">
                     {guide.whyNeeded.mr}
                   </p>
@@ -173,7 +173,7 @@ export default function DocumentHelpGuide({
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5 flex items-center gap-1.5">
                   <Info className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Who can apply</span>
+                  <span>{t('whoCanApplyHeading', 'Who can apply')}</span>
                 </h4>
                 <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
                   {guide.eligibility}
@@ -185,7 +185,7 @@ export default function DocumentHelpGuide({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
                     <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider block mb-1.5">
-                      Required supporting papers
+                      {t('requiredSupportingPapers', 'Required supporting papers')}
                     </span>
                     <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300">
                       {guide.prerequisites.required?.map((r, i) => (
@@ -199,7 +199,7 @@ export default function DocumentHelpGuide({
 
                   <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                      Optional / Useful additions
+                      {t('optionalSupportingPapers', 'Optional alternative papers')}
                     </span>
                     <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
                       {guide.prerequisites.optional?.map((o, i) => (
@@ -217,7 +217,7 @@ export default function DocumentHelpGuide({
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2.5 flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Step-by-step application process</span>
+                  <span>{t('stepByStepProcedure', 'Step-by-Step Procedure')}</span>
                 </h4>
                 <div className="space-y-2.5">
                   {guide.steps?.map((step, idx) => (
@@ -241,7 +241,7 @@ export default function DocumentHelpGuide({
                 <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                      Official Government Authority
+                      {t('officialGovAuthority', 'Official Government Authority')}
                     </span>
                     <h5 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                       {guide.officialPortal.name}
@@ -254,7 +254,7 @@ export default function DocumentHelpGuide({
                     rel="noreferrer"
                     className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition shrink-0"
                   >
-                    <span>{guide.officialPortal.buttonText || 'Visit Official Website'}</span>
+                    <span>{guide.officialPortal.buttonText || t('officialPortalBtn', 'Open Official Application Portal')}</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
@@ -265,7 +265,7 @@ export default function DocumentHelpGuide({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                     <span className="font-bold text-slate-900 dark:text-white block mb-0.5">
-                      Expected Official Fee:
+                      {t('officialFeesLabel', 'Official Fees')}:
                     </span>
                     <span className="text-slate-600 dark:text-slate-300 font-medium">
                       {guide.feeAndTimeline.feeText}
@@ -274,7 +274,7 @@ export default function DocumentHelpGuide({
 
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                     <span className="font-bold text-slate-900 dark:text-white block mb-0.5">
-                      Expected Processing Time:
+                      {t('estimatedTimeLabel', 'Estimated Time')}:
                     </span>
                     <span className="text-slate-600 dark:text-slate-300 font-medium">
                       {guide.feeAndTimeline.timelineText}
@@ -287,7 +287,7 @@ export default function DocumentHelpGuide({
               {guide.alternatives && guide.alternatives.length > 0 && (
                 <div>
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
-                    Accepted alternatives
+                    {t('acceptedAlternativesHeading', 'Accepted alternatives')}
                   </h4>
                   <div className="space-y-2">
                     {guide.alternatives.map((alt, i) => (
@@ -321,7 +321,7 @@ export default function DocumentHelpGuide({
         {/* Modal Footer: Action Buttons to update checklist status */}
         <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 flex flex-col sm:flex-row items-center justify-between gap-3">
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider shrink-0">
-            Update Checklist Status:
+            {t('updateStatusLabel', 'Update Checklist Status:')}
           </span>
 
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
@@ -333,7 +333,7 @@ export default function DocumentHelpGuide({
                 isSeniorMode ? 'min-h-[52px]' : ''
               }`}
             >
-              I have started applying
+              {t('iHaveStartedApplying', 'I have started applying')}
             </button>
 
             <button
@@ -344,7 +344,7 @@ export default function DocumentHelpGuide({
                 isSeniorMode ? 'min-h-[52px]' : ''
               }`}
             >
-              I have this document now
+              {t('iHaveThisDocNow', 'I have this document now')}
             </button>
 
             <button
@@ -355,7 +355,7 @@ export default function DocumentHelpGuide({
                 isSeniorMode ? 'min-h-[52px]' : ''
               }`}
             >
-              Not applicable
+              {t('statusNotApplicable', 'Not applicable')}
             </button>
           </div>
         </div>

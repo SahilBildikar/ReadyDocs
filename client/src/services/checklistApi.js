@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
+const API_BASE_URL = import.meta.env.PROD ? "/api" : (import.meta.env.VITE_API_BASE_URL || "/api");
 
 async function getAuthHeader() {
   let token = null;
@@ -14,14 +14,14 @@ async function getAuthHeader() {
 }
 
 export async function fetchServices() {
-  const res = await fetch(`${API_BASE}/checklists/services`);
+  const res = await fetch(`${API_BASE_URL}/checklists/services`);
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Failed to fetch services');
   return data.services || [];
 }
 
 export async function fetchHelpGuide(guideId) {
-  const res = await fetch(`${API_BASE}/checklists/guides/${guideId}`);
+  const res = await fetch(`${API_BASE_URL}/checklists/guides/${guideId}`);
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Failed to fetch help guide');
   return data.guide;
@@ -29,7 +29,7 @@ export async function fetchHelpGuide(guideId) {
 
 export async function generateChecklist({ serviceType, profileId, answers }) {
   const authHeaders = await getAuthHeader();
-  const res = await fetch(`${API_BASE}/checklists/generate`, {
+  const res = await fetch(`${API_BASE_URL}/checklists/generate`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -44,7 +44,7 @@ export async function generateChecklist({ serviceType, profileId, answers }) {
 
 export async function saveChecklist({ serviceType, profileId, institutionName, sourceUrl, answers, items }) {
   const authHeaders = await getAuthHeader();
-  const res = await fetch(`${API_BASE}/checklists`, {
+  const res = await fetch(`${API_BASE_URL}/checklists`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -59,7 +59,7 @@ export async function saveChecklist({ serviceType, profileId, institutionName, s
 
 export async function updateChecklistItemStatus({ checklistId, itemId, status, notes = null }) {
   const authHeaders = await getAuthHeader();
-  const res = await fetch(`${API_BASE}/checklists/${checklistId}/items/${itemId}/status`, {
+  const res = await fetch(`${API_BASE_URL}/checklists/${checklistId}/items/${itemId}/status`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ export async function fetchChecklists({ serviceType = '', status = '', search = 
   if (search) params.append('search', search);
 
   const authHeaders = await getAuthHeader();
-  const res = await fetch(`${API_BASE}/checklists?${params.toString()}`, {
+  const res = await fetch(`${API_BASE_URL}/checklists?${params.toString()}`, {
     headers: authHeaders
   });
   const data = await res.json();
@@ -89,7 +89,7 @@ export async function fetchChecklists({ serviceType = '', status = '', search = 
 
 export async function fetchChecklistById(id) {
   const authHeaders = await getAuthHeader();
-  const res = await fetch(`${API_BASE}/checklists/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/checklists/${id}`, {
     headers: authHeaders
   });
   const data = await res.json();
@@ -99,7 +99,7 @@ export async function fetchChecklistById(id) {
 
 export async function deleteChecklist(id) {
   const authHeaders = await getAuthHeader();
-  const res = await fetch(`${API_BASE}/checklists/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/checklists/${id}`, {
     method: 'DELETE',
     headers: authHeaders
   });
@@ -117,7 +117,7 @@ export async function uploadAndClassifyDocument({ file, checklistId, targetItemI
   }
 
   const authHeaders = await getAuthHeader();
-  const res = await fetch(`${API_BASE}/documents/upload-and-classify`, {
+  const res = await fetch(`${API_BASE_URL}/documents/upload-and-classify`, {
     method: 'POST',
     headers: authHeaders, // Note: do NOT set Content-Type header so browser sets multipart boundary
     body: formData
@@ -130,7 +130,7 @@ export async function uploadAndClassifyDocument({ file, checklistId, targetItemI
 
 export async function deleteDocument(id) {
   const authHeaders = await getAuthHeader();
-  const res = await fetch(`${API_BASE}/documents/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/documents/${id}`, {
     method: 'DELETE',
     headers: authHeaders
   });

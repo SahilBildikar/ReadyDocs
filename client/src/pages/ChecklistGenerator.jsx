@@ -19,21 +19,21 @@ import {
   HeartHandshake, 
   CheckSquare, 
   ArrowRight, 
-  ArrowLeft,
+  ArrowLeft, 
   Sparkles, 
   AlertCircle, 
   ExternalLink, 
   HelpCircle, 
   CheckCircle2, 
   Save, 
-  Star,
-  Users,
-  FileText,
-  Download,
-  Share2,
-  Copy,
-  Clock,
-  Compass
+  Star, 
+  Users, 
+  FileText, 
+  Download, 
+  Share2, 
+  Copy, 
+  Clock, 
+  Compass 
 } from 'lucide-react';
 
 export default function ChecklistGenerator() {
@@ -43,7 +43,7 @@ export default function ChecklistGenerator() {
   const serviceParam = searchParams.get('service'); // 'sbi_savings' | 'sppu_admission' | 'insurance_claim'
 
   const { profiles, activeProfile, setActiveProfile } = useProfile();
-  const { isSeniorMode } = useLanguage();
+  const { isSeniorMode, t, language } = useLanguage();
 
   const [services, setServices] = useState([]);
   const [selectedServiceId, setSelectedServiceId] = useState(null);
@@ -68,7 +68,7 @@ export default function ChecklistGenerator() {
       case 'bank': return 'sbi_savings';
       case 'college': return 'sppu_admission';
       case 'insurance': return 'insurance_claim';
-      case 'upload': return 'sbi_savings'; // default or instant scanner
+      case 'upload': return 'sbi_savings';
       default: return null;
     }
   };
@@ -84,9 +84,9 @@ export default function ChecklistGenerator() {
       })
       .catch((err) => {
         console.error('Failed to load services:', err);
-        setError('Could not connect to service definitions. Please ensure the backend is running.');
+        setError(t('serverNotRunningError', 'Could not connect to service definitions. Please ensure the backend is running.'));
       });
-  }, [actionParam, serviceParam]);
+  }, [actionParam, serviceParam, t]);
 
   useEffect(() => {
     if (activeProfile && !selectedProfileId) {
@@ -96,7 +96,6 @@ export default function ChecklistGenerator() {
 
   const currentService = services.find(s => s.id === selectedServiceId);
   const questions = currentService ? currentService.questions : [];
-  // The wizard steps = questions + 1 profile selection question
   const totalSteps = questions.length + 1;
   const isProfileStep = currentStepIndex === questions.length;
   const currentQuestion = questions[currentStepIndex];
@@ -123,16 +122,75 @@ export default function ChecklistGenerator() {
     if (currentStepIndex > 0) {
       setCurrentStepIndex(prev => prev - 1);
     } else {
-      // Back to action select
       setSelectedServiceId(null);
     }
+  };
+
+  // Dynamic Question & Option Translation Helpers
+  const getQuestionLabel = (q) => {
+    if (!q) return '';
+    return t(`q_${q.id}`, q.label);
+  };
+
+  const getOptionLabel = (qId, opt) => {
+    if (!opt) return '';
+    if (qId === 'account_type') {
+      if (opt.value === 'savings') return t('opt_savings', opt.label);
+      if (opt.value === 'current') return t('opt_current', opt.label);
+      if (opt.value === 'minor') return t('opt_minor', opt.label);
+    }
+    if (qId === 'is_18_or_above') {
+      return opt.value === true ? t('opt_yes_18', opt.label) : t('opt_no_18', opt.label);
+    }
+    if (qId === 'has_pan') {
+      return opt.value === true ? t('opt_yes_pan', opt.label) : t('opt_no_pan', opt.label);
+    }
+    if (qId === 'has_aadhaar') {
+      return opt.value === true ? t('opt_yes_aadhaar', opt.label) : t('opt_no_aadhaar', opt.label);
+    }
+    if (qId === 'current_address_matches_permanent') {
+      return opt.value === true ? t('opt_yes_address', opt.label) : t('opt_no_address', opt.label);
+    }
+    if (qId === 'course_level') {
+      if (opt.value === 'ug' || opt.value === 'undergraduate') return t('opt_ug', opt.label);
+      if (opt.value === 'pg' || opt.value === 'postgraduate') return t('opt_pg', opt.label);
+      if (opt.value === 'diploma') return t('opt_diploma', opt.label);
+    }
+    if (qId === 'is_maharashtra_domicile') {
+      return opt.value === true ? t('opt_yes_domicile', opt.label) : t('opt_no_domicile', opt.label);
+    }
+    if (qId === 'category') {
+      if (opt.value === 'general' || opt.value === 'open') return t('opt_general', opt.label);
+      if (opt.value === 'reserved') return t('opt_reserved', opt.label);
+    }
+    if (qId === 'has_previous_marksheet') {
+      return opt.value === true ? t('opt_yes_marksheet', opt.label) : t('opt_no_marksheet', opt.label);
+    }
+    if (qId === 'claim_type') {
+      if (opt.value === 'reimbursement') return t('opt_reimbursement', opt.label);
+      if (opt.value === 'cashless') return t('opt_cashless', opt.label);
+    }
+    if (qId === 'hospital_type') {
+      return opt.value === 'network' ? t('opt_network', opt.label) : t('opt_non_network', opt.label);
+    }
+    if (qId === 'has_discharge_summary') {
+      return opt.value === true ? t('opt_yes_discharge', opt.label) : t('opt_no_discharge', opt.label);
+    }
+    if (qId === 'bills_exceed_10k') {
+      return opt.value === true ? t('opt_yes_10k', opt.label) : t('opt_no_10k', opt.label);
+    }
+
+    if (opt.value === true) return t('optYes', opt.label);
+    if (opt.value === false) return t('optNo', opt.label);
+
+    return opt.label;
   };
 
   // Generate and Auto-Save Checklist
   const handleGenerateAndSave = async () => {
     const profId = selectedProfileId || activeProfile?.id;
     if (!profId) {
-      setError('Please select or create a profile to link this checklist.');
+      setError(t('noProfilesWarning', 'Please select or create a profile to link this checklist.'));
       return;
     }
 
@@ -160,7 +218,7 @@ export default function ChecklistGenerator() {
 
       setGeneratedChecklist(preview);
       setSavedChecklistRecord(saved);
-      showToast('Checklist personalized and safely saved!');
+      showToast(t('checklistResultBadge', 'Checklist personalized and safely saved!'));
     } catch (err) {
       console.error('Error generating checklist:', err);
       setError(err.message || 'Failed to generate personalized checklist.');
@@ -183,7 +241,7 @@ export default function ChecklistGenerator() {
       items
     });
     if (success) {
-      showToast('Checklist copied to clipboard!');
+      showToast(t('copiedToast', 'Checklist copied to clipboard!'));
     }
   };
 
@@ -207,7 +265,7 @@ export default function ChecklistGenerator() {
       profileName: profile?.profile_name,
       fullName: profile?.full_name
     });
-    showToast('PDF downloaded successfully!');
+    showToast(t('pdfDownloadedToast', 'PDF downloaded successfully!'));
   };
 
   const handleStatusUpdated = (updatedItem, updatedChecklist) => {
@@ -232,7 +290,7 @@ export default function ChecklistGenerator() {
       case 'matched':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300">
-            <CheckCircle2 className="w-3 h-3" /> Matched
+            <CheckCircle2 className="w-3 h-3" /> {t('statusVerified', 'Matched')}
           </span>
         );
       case 'application_in_progress':
@@ -250,19 +308,19 @@ export default function ChecklistGenerator() {
       case 'not_applicable':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-            N/A
+            {t('statusNotApplicable', 'N/A')}
           </span>
         );
       case 'needs_review':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300">
-            <AlertCircle className="w-3 h-3" /> Needs Review
+            <AlertCircle className="w-3 h-3" /> {t('statusNeedsReview', 'Needs Review')}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300">
-            Missing
+            {t('statusMissing', 'Missing')}
           </span>
         );
     }
@@ -297,13 +355,13 @@ export default function ChecklistGenerator() {
             <div className="text-center max-w-xl mx-auto mb-8">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 mb-3">
                 <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-                <span>ReadyDocs Guided Flow</span>
+                <span>{t('guidedFlowBadge', 'ReadyDocs Guided Flow')}</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                What do you want to do?
+                {t('whatDoYouWantToDo', 'What do you want to do?')}
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2 font-medium">
-                Choose an action. We will ask you short, simple questions one at a time to build your exact document package.
+                {t('chooseActionSubtitle', 'Choose an action. We will ask you short, simple questions one at a time to build your exact document package.')}
               </p>
             </div>
 
@@ -320,14 +378,14 @@ export default function ChecklistGenerator() {
                     <Building2 className="w-6 h-6" />
                   </div>
                   <h3 className="font-bold text-base text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-                    Open a bank account
+                    {t('actionBankTitle', 'Open a bank account')}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                    Savings, Current, or Minor accounts for SBI and other banks.
+                    {t('actionBankDesc', 'Savings, Current, or Minor accounts for SBI and other banks.')}
                   </p>
                 </div>
                 <div className="mt-4 flex items-center gap-1 text-xs font-bold text-teal-600 dark:text-teal-400">
-                  <span>Start Questions</span>
+                  <span>{t('startQuestionsBtn', 'Start Questions')}</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               </button>
@@ -344,14 +402,14 @@ export default function ChecklistGenerator() {
                     <GraduationCap className="w-6 h-6" />
                   </div>
                   <h3 className="font-bold text-base text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-                    Apply for college admission
+                    {t('actionCollegeTitle', 'Apply for college admission')}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                    Undergraduate, Postgraduate, and Diploma college requirements.
+                    {t('actionCollegeDesc', 'Undergraduate, Postgraduate, and Diploma college requirements.')}
                   </p>
                 </div>
                 <div className="mt-4 flex items-center gap-1 text-xs font-bold text-teal-600 dark:text-teal-400">
-                  <span>Start Questions</span>
+                  <span>{t('startQuestionsBtn', 'Start Questions')}</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               </button>
@@ -368,14 +426,14 @@ export default function ChecklistGenerator() {
                     <HeartHandshake className="w-6 h-6" />
                   </div>
                   <h3 className="font-bold text-base text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-                    Make an insurance claim
+                    {t('actionInsuranceTitle', 'Make an insurance claim')}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                    Hospitalization reimbursement, accidental damage, or theft papers.
+                    {t('actionInsuranceDesc', 'Hospitalization reimbursement, accidental damage, or theft papers.')}
                   </p>
                 </div>
                 <div className="mt-4 flex items-center gap-1 text-xs font-bold text-teal-600 dark:text-teal-400">
-                  <span>Start Questions</span>
+                  <span>{t('startQuestionsBtn', 'Start Questions')}</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               </button>
@@ -392,14 +450,14 @@ export default function ChecklistGenerator() {
                     <FileText className="w-6 h-6" />
                   </div>
                   <h3 className="font-bold text-base text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-                    Upload & check my documents
+                    {t('actionUploadTitle', 'Upload & check my documents')}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                    Run AI verification on your existing file before applying anywhere.
+                    {t('actionUploadDesc', 'Run AI verification on your existing file before applying anywhere.')}
                   </p>
                 </div>
                 <div className="mt-4 flex items-center gap-1 text-xs font-bold text-teal-600 dark:text-teal-400">
-                  <span>Start Scan</span>
+                  <span>{t('startScanBtn', 'Start Scan')}</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               </button>
@@ -421,9 +479,14 @@ export default function ChecklistGenerator() {
                   className="inline-flex items-center gap-1 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>{currentStepIndex === 0 ? 'Change Goal' : 'Back'}</span>
+                  <span>{currentStepIndex === 0 ? t('changeGoalBtn', 'Change Goal') : t('backBtn', 'Back')}</span>
                 </button>
-                <span>Question {currentStepIndex + 1} of {totalSteps}</span>
+                <span>
+                  {t('questionCounter', 'Question {current} of {total}', {
+                    current: currentStepIndex + 1,
+                    total: totalSteps
+                  })}
+                </span>
               </div>
 
               {/* Progress Bar */}
@@ -446,7 +509,7 @@ export default function ChecklistGenerator() {
                   <h2 className={`font-extrabold text-slate-900 dark:text-white mb-6 ${
                     isSeniorMode ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'
                   }`}>
-                    {currentQuestion.label}
+                    {getQuestionLabel(currentQuestion)}
                   </h2>
 
                   {/* Render based on question type */}
@@ -466,7 +529,7 @@ export default function ChecklistGenerator() {
                                 : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
                             }`}
                           >
-                            {opt.label}
+                            {getOptionLabel(currentQuestion.id, opt)}
                           </button>
                         ))}
                       </div>
@@ -474,13 +537,13 @@ export default function ChecklistGenerator() {
                       {answers[currentQuestion.id] === 'other' && (
                         <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            Type name:
+                            {t('typeNameLabel', 'Type name:')}
                           </label>
                           <input
                             type="text"
                             value={answers[`custom_${currentQuestion.id}`] || ''}
                             onChange={(e) => handleAnswerSelect(`custom_${currentQuestion.id}`, e.target.value)}
-                            placeholder="Enter specific name..."
+                            placeholder={t('enterSpecificNamePlaceholder', 'Enter specific name...')}
                             className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-teal-500 focus:outline-none"
                           />
                         </div>
@@ -501,7 +564,7 @@ export default function ChecklistGenerator() {
                               : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
                           }`}
                         >
-                          {opt.label}
+                          {getOptionLabel(currentQuestion.id, opt)}
                         </button>
                       ))}
                     </div>
@@ -520,7 +583,7 @@ export default function ChecklistGenerator() {
                               : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
                           }`}
                         >
-                          {opt.label}
+                          {getOptionLabel(currentQuestion.id, opt)}
                         </button>
                       ))}
                     </div>
@@ -530,7 +593,7 @@ export default function ChecklistGenerator() {
                         type="text"
                         value={answers[currentQuestion.id] || currentQuestion.defaultValue || ''}
                         onChange={(e) => handleAnswerSelect(currentQuestion.id, e.target.value)}
-                        placeholder={currentQuestion.placeholder || 'Type here...'}
+                        placeholder={t('typeHerePlaceholder', 'Type here...')}
                         className="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:outline-none"
                       />
                     </div>
@@ -540,15 +603,15 @@ export default function ChecklistGenerator() {
                 /* Step Final: Which saved profile should be used? */
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 block mb-1">
-                    Final Step
+                    {t('finalStepBadge', 'Final Step')}
                   </span>
                   <h2 className={`font-extrabold text-slate-900 dark:text-white mb-2 ${
                     isSeniorMode ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'
                   }`}>
-                    Which saved profile should be used?
+                    {t('whichProfileTitle', 'Which saved profile should be used?')}
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 font-medium">
-                    The checklist holder name will be cross-checked during document processing.
+                    {t('whichProfileSubtitle', 'The checklist holder name will be cross-checked during document processing.')}
                   </p>
 
                   <div className="space-y-3 mb-6">
@@ -586,7 +649,7 @@ export default function ChecklistGenerator() {
                           {isSelected && (
                             <span className="text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1">
                               <Star className="w-3.5 h-3.5 fill-current" />
-                              <span>Selected</span>
+                              <span>{t('selectedBadge', 'Selected')}</span>
                             </span>
                           )}
                         </button>
@@ -599,7 +662,7 @@ export default function ChecklistGenerator() {
                     className="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline inline-flex items-center gap-1"
                   >
                     <Users className="w-3.5 h-3.5" />
-                    <span>Create a new profile instead</span>
+                    <span>{t('createProfileInstead', 'Create a new profile instead')}</span>
                   </Link>
                 </div>
               )}
@@ -613,7 +676,7 @@ export default function ChecklistGenerator() {
                     isSeniorMode ? 'min-h-[52px]' : ''
                   }`}
                 >
-                  Back
+                  {t('backBtn', 'Back')}
                 </button>
 
                 {!isProfileStep ? (
@@ -624,7 +687,7 @@ export default function ChecklistGenerator() {
                       isSeniorMode ? 'min-h-[52px] text-sm' : ''
                     }`}
                   >
-                    <span>Next</span>
+                    <span>{t('nextBtn', 'Next')}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 ) : (
@@ -637,11 +700,11 @@ export default function ChecklistGenerator() {
                     }`}
                   >
                     {isLoading ? (
-                      <span>Generating Checklist...</span>
+                      <span>{t('generatingChecklistBtn', 'Generating Checklist...')}</span>
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4 text-emerald-200" />
-                        <span>Generate My Checklist</span>
+                        <span>{t('generateMyChecklistBtn', 'Generate My Checklist')}</span>
                       </>
                     )}
                   </button>
@@ -662,7 +725,7 @@ export default function ChecklistGenerator() {
                 <div>
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 mb-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Personalized Checklist Generated & Saved</span>
+                    <span>{t('checklistResultBadge', 'Personalized Checklist Generated & Saved')}</span>
                   </div>
                   <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                     {savedChecklistRecord.institution_name}
@@ -681,7 +744,7 @@ export default function ChecklistGenerator() {
                     title="Download printable A4 PDF"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Download PDF</span>
+                    <span>{t('downloadPdfBtn', 'Download PDF')}</span>
                   </button>
 
                   <button
@@ -691,7 +754,7 @@ export default function ChecklistGenerator() {
                     title="Share summary on WhatsApp"
                   >
                     <Share2 className="w-3.5 h-3.5" />
-                    <span>WhatsApp</span>
+                    <span>{t('whatsappBtn', 'WhatsApp')}</span>
                   </button>
 
                   <button
@@ -701,7 +764,7 @@ export default function ChecklistGenerator() {
                     title="Copy plain text"
                   >
                     <Copy className="w-3.5 h-3.5" />
-                    <span>Copy</span>
+                    <span>{t('copyBtn', 'Copy')}</span>
                   </button>
 
                   <button
@@ -709,7 +772,7 @@ export default function ChecklistGenerator() {
                     onClick={() => navigate(`/checklists/${savedChecklistRecord.id}`)}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition cursor-pointer"
                   >
-                    <span>Upload Documents</span>
+                    <span>{t('uploadDocsBtn', 'Upload Documents')}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -717,8 +780,8 @@ export default function ChecklistGenerator() {
 
               {/* Source & Verified Stamp */}
               <div className="mt-4 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2">
-                <span>Verified Official Source: <a href={savedChecklistRecord.source_url} target="_blank" rel="noreferrer" className="text-teal-600 font-semibold underline">{savedChecklistRecord.source_url}</a></span>
-                <span>Last Verified: 2026-09-30</span>
+                <span>{t('verifiedSourceLabel', 'Verified Official Source:')} <a href={savedChecklistRecord.source_url} target="_blank" rel="noreferrer" className="text-teal-600 font-semibold underline">{savedChecklistRecord.source_url}</a></span>
+                <span>{t('lastVerifiedLabel', 'Last Verified:')} 2026-09-30</span>
               </div>
             </div>
 
@@ -728,13 +791,11 @@ export default function ChecklistGenerator() {
             {/* Checklist Items Display */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-                Personalized Document Requirements ({savedChecklistRecord.result_json?.items?.length || 0})
+                {t('docRequirementsHeading', 'Personalized Document Requirements')} ({savedChecklistRecord.result_json?.items?.length || 0})
               </h2>
 
               <div className="space-y-4">
                 {(savedChecklistRecord.result_json?.items || []).map((item, idx) => {
-                  const isMissing = item.status === 'missing' || !item.status;
-
                   return (
                     <div
                       key={item.id}
@@ -751,7 +812,7 @@ export default function ChecklistGenerator() {
                             </h3>
                             {item.mandatory && (
                               <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300">
-                                Mandatory
+                                {t('mandatoryBadge', 'Mandatory')}
                               </span>
                             )}
                           </div>
@@ -759,7 +820,7 @@ export default function ChecklistGenerator() {
                             {item.explanation}
                           </p>
                           <div className="mt-2 text-[11px] text-slate-500">
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">Accepted: </span>
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">{t('acceptedPapersLabel', 'Accepted:')} </span>
                             {item.acceptableDocuments?.join(', ')}
                           </div>
                         </div>
@@ -781,7 +842,7 @@ export default function ChecklistGenerator() {
                             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-teal-300 dark:border-teal-700/80 bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 text-xs font-bold hover:bg-teal-100 dark:hover:bg-teal-900/60 transition cursor-pointer"
                           >
                             <HelpCircle className="w-3.5 h-3.5" />
-                            <span>How do I get this?</span>
+                            <span>{t('howDoIGetThisBtn', 'How do I get this?')}</span>
                           </button>
                         )}
                       </div>
@@ -799,9 +860,9 @@ export default function ChecklistGenerator() {
                     setSavedChecklistRecord(null);
                     setSelectedServiceId(null);
                   }}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 transition"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 transition cursor-pointer"
                 >
-                  ← Start Another Checklist
+                  ← {t('changeGoalBtn', 'Start Another Checklist')}
                 </button>
 
                 <button
@@ -809,7 +870,7 @@ export default function ChecklistGenerator() {
                   onClick={() => navigate(`/checklists/${savedChecklistRecord.id}`)}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs sm:text-sm shadow-xs transition cursor-pointer"
                 >
-                  <span>Proceed to Upload Documents</span>
+                  <span>{t('uploadDocsBtn', 'Proceed to Upload Documents')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -830,7 +891,7 @@ export default function ChecklistGenerator() {
       </main>
 
       <footer className="border-t border-slate-200 dark:border-slate-800 py-4 text-center text-xs text-slate-500 dark:text-slate-400">
-        ReadyDocs • Intelligent Document Processing • “One visit is enough.”
+        ReadyDocs • Intelligent Document Processing • “{t('tagline', 'One visit is enough.')}”
       </footer>
     </div>
   );

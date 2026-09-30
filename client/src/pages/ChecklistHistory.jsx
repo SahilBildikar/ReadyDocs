@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { useLanguage } from '../context/LanguageContext';
 import { fetchChecklists, deleteChecklist } from '../services/checklistApi';
 import { 
   CheckSquare, 
@@ -21,6 +22,7 @@ import {
 
 export default function ChecklistHistory() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [checklists, setChecklists] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -60,7 +62,7 @@ export default function ChecklistHistory() {
   const handleDelete = async (e, id) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this checklist? All uploaded document associations will also be removed.')) {
+    if (!window.confirm(t('deleteChecklistConfirm', 'Are you sure you want to delete this checklist? All uploaded document associations will also be removed.'))) {
       return;
     }
 
@@ -86,19 +88,19 @@ export default function ChecklistHistory() {
       case 'ready':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300">
-            <CheckCircle2 className="w-3 h-3" /> Ready
+            <CheckCircle2 className="w-3 h-3" /> {t('readyForVisit', 'Ready')}
           </span>
         );
       case 'needs_attention':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300">
-            <AlertCircle className="w-3 h-3" /> Needs Attention
+            <AlertCircle className="w-3 h-3" /> {t('needsAttention', 'Needs Attention')}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-            <Clock className="w-3 h-3" /> Incomplete
+            <Clock className="w-3 h-3" /> {t('incomplete', 'Incomplete')}
           </span>
         );
     }
@@ -113,10 +115,10 @@ export default function ChecklistHistory() {
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              My Document Checklists
+              {t('myChecklistsTitle', 'My Document Checklists')}
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 font-medium">
-              Review and manage your document readiness packages across all services.
+              {t('myChecklistsSubtitle', 'Review and manage your document readiness packages across all services.')}
             </p>
           </div>
 
@@ -125,7 +127,7 @@ export default function ChecklistHistory() {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs sm:text-sm shadow-xs transition shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>New Checklist</span>
+            <span>{t('newChecklistBtn', 'New Checklist')}</span>
           </Link>
         </div>
 
@@ -139,7 +141,7 @@ export default function ChecklistHistory() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by institution, service, or profile name..."
+                placeholder={t('searchChecklistPlaceholder', 'Search by institution, service, or profile name...')}
                 className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
               />
             </div>
@@ -150,10 +152,10 @@ export default function ChecklistHistory() {
               onChange={(e) => setSelectedService(e.target.value)}
               className="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
             >
-              <option value="">All Services</option>
-              <option value="sbi_savings">SBI Savings Account</option>
-              <option value="sppu_admission">SPPU Admission</option>
-              <option value="insurance_claim">Health Insurance Claim</option>
+              <option value="">{t('allServicesOption', 'All Services')}</option>
+              <option value="sbi_savings">{t('guidedCard1Title', 'SBI Savings Account')}</option>
+              <option value="sppu_admission">{t('guidedCard2Title', 'SPPU Admission')}</option>
+              <option value="insurance_claim">{t('guidedCard3Title', 'Health Insurance Claim')}</option>
             </select>
 
             {/* Status filter */}
@@ -162,17 +164,17 @@ export default function ChecklistHistory() {
               onChange={(e) => setSelectedStatus(e.target.value)}
               className="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
             >
-              <option value="">All Statuses</option>
-              <option value="ready">Ready</option>
-              <option value="needs_attention">Needs Attention</option>
-              <option value="incomplete">Incomplete</option>
+              <option value="">{t('allStatusesOption', 'All Statuses')}</option>
+              <option value="ready">{t('readyForVisit', 'Ready')}</option>
+              <option value="needs_attention">{t('needsAttention', 'Needs Attention')}</option>
+              <option value="incomplete">{t('incomplete', 'Incomplete')}</option>
             </select>
 
             <button
               type="submit"
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold text-xs transition cursor-pointer"
             >
-              Search
+              {t('searchBtn', 'Search')}
             </button>
           </form>
         </div>
@@ -181,7 +183,7 @@ export default function ChecklistHistory() {
         {isLoading ? (
           <div className="py-16 text-center">
             <div className="w-8 h-8 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-xs font-semibold text-slate-500">Loading checklist history...</p>
+            <p className="text-xs font-semibold text-slate-500">{t('loadingChecklistHistory', 'Loading checklist history...')}</p>
           </div>
         ) : error ? (
           <div className="p-6 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-center text-xs text-rose-800 dark:text-rose-200">
@@ -194,10 +196,10 @@ export default function ChecklistHistory() {
               <CheckSquare className="w-6 h-6" />
             </div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              No Checklists Found
+              {t('noChecklistsFoundTitle', 'No Checklists Found')}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto font-medium">
-              Start your first document checklist for SBI Savings Account, SPPU University Admission, or Health Insurance.
+              {t('noChecklistsFoundDesc', 'Start your first document checklist for SBI Savings Account, SPPU University Admission, or Health Insurance.')}
             </p>
             <div className="mt-6">
               <Link
@@ -205,7 +207,7 @@ export default function ChecklistHistory() {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition"
               >
                 <Plus className="w-4 h-4" />
-                <span>Create New Checklist</span>
+                <span>{t('createChecklistCTA', 'Create New Checklist')}</span>
               </Link>
             </div>
           </div>
@@ -261,7 +263,7 @@ export default function ChecklistHistory() {
                   {/* Bottom Footer */}
                   <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                      <strong>{matchedCount}</strong> / {items.length} Documents Matched
+                      {t('docsMatchedCount', '{matched} / {total} Documents Matched', { matched: matchedCount, total: items.length })}
                     </span>
 
                     <div className="flex items-center gap-2">
@@ -269,13 +271,13 @@ export default function ChecklistHistory() {
                         type="button"
                         onClick={(e) => handleDelete(e, c.id)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
-                        title="Delete checklist"
+                        title={t('delete', 'Delete')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
 
                       <span className="inline-flex items-center gap-1 text-xs font-bold text-teal-600 dark:text-teal-400">
-                        <span>Open</span>
+                        <span>{t('openChecklistBtn', 'Open')}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </span>
                     </div>

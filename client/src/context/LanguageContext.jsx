@@ -48,17 +48,28 @@ export function LanguageProvider({ children }) {
 
   /**
    * Translate key into current language with fallback to English
+   * Supports parameter interpolation, e.g.:
+   * t('questionCounter', { current: 1, total: 4 })
+   * or t('questionCounter', 'Question {current} of {total}', { current: 1, total: 4 })
    */
-  const t = (key, fallback = '') => {
+  const t = (key, fallback = '', params = {}) => {
+    let actualFallback = fallback;
+    let actualParams = params;
+    if (typeof fallback === 'object' && fallback !== null) {
+      actualParams = fallback;
+      actualFallback = '';
+    }
+
     const dict = translations[language] || translations.en;
-    if (dict && dict[key]) {
-      return dict[key];
+    let str = (dict && dict[key]) || (translations.en && translations.en[key]) || actualFallback || key;
+
+    if (typeof str === 'string' && actualParams && typeof actualParams === 'object') {
+      Object.keys(actualParams).forEach((pKey) => {
+        str = str.replace(new RegExp(`\\{${pKey}\\}`, 'g'), String(actualParams[pKey]));
+      });
     }
-    const enDict = translations.en;
-    if (enDict && enDict[key]) {
-      return enDict[key];
-    }
-    return fallback || key;
+
+    return str;
   };
 
   return (

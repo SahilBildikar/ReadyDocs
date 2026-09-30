@@ -98,6 +98,8 @@ export function AuthProvider({ children }) {
   const register = useCallback(async (name, email, password) => {
     setAuthLoading(true);
     try {
+      const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined;
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -105,12 +107,30 @@ export function AuthProvider({ children }) {
           data: {
             name,
             full_name: name
-          }
+          },
+          emailRedirectTo: redirectUrl
         }
       });
 
       if (error) {
+        const errorMsgLower = (error.message || '').toLowerCase();
+        if (
+          errorMsgLower.includes('already registered') ||
+          errorMsgLower.includes('already exists') ||
+          errorMsgLower.includes('unique constraint')
+        ) {
+          const customError = new Error('An account with this email already exists. Please log in instead.');
+          customError.code = 'USER_ALREADY_EXISTS';
+          throw customError;
+        }
         throw new Error(error.message);
+      }
+
+      // Check if user already exists (Supabase returns empty identities array when email is taken with email confirm enabled)
+      if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        const customError = new Error('An account with this email already exists. Please log in instead.');
+        customError.code = 'USER_ALREADY_EXISTS';
+        throw customError;
       }
 
       if (data?.session) {
@@ -119,10 +139,18 @@ export function AuthProvider({ children }) {
         setToken(data.session.access_token);
         localStorage.setItem('readydocs_token', data.session.access_token);
         localStorage.setItem('readydocs_user', JSON.stringify(formatted));
-        return formatted;
+        return {
+          user: formatted,
+          session: data.session,
+          requiresEmailConfirmation: false
+        };
       }
 
-      return formatUser(data?.user);
+      return {
+        user: formatUser(data?.user),
+        session: null,
+        requiresEmailConfirmation: true
+      };
     } finally {
       setAuthLoading(false);
     }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import Navbar from '../components/Navbar';
 import { 
   Mail, 
@@ -16,6 +17,7 @@ import {
 export default function Login() {
   const navigate = useNavigate();
   const { login, isAuthenticated, isInitializing } = useAuth();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,7 +35,7 @@ export default function Login() {
     setErrorMessage('');
 
     if (!email.trim() || !password) {
-      setErrorMessage('Please fill in both email and password.');
+      setErrorMessage(t('fillAllFieldsError', 'Please fill in both email and password.'));
       return;
     }
 
@@ -42,7 +44,7 @@ export default function Login() {
       await login(email.trim(), password);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      setErrorMessage(err.message || 'Login failed. Please check your credentials.');
+      setErrorMessage(err.message || t('loginFailedError', 'Login failed. Please check your credentials.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -65,10 +67,10 @@ export default function Login() {
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-sm">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              Welcome Back
+              {t('loginTitle', 'Welcome Back')}
             </h1>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 font-medium">
-              Log in to access your document checklists and files
+              {t('loginSubtitle', 'Log in to access your document checklists and files')}
             </p>
           </div>
 
@@ -83,7 +85,7 @@ export default function Login() {
             {/* Email Field */}
             <div>
               <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
-                Email Address
+                {t('emailLabel', 'Email Address')}
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
@@ -92,7 +94,7 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
+                  placeholder={t('emailPlaceholder', 'name@example.com')}
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
                 />
               </div>
@@ -101,7 +103,7 @@ export default function Login() {
             {/* Password Field */}
             <div>
               <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
-                Password
+                {t('passwordLabel', 'Password')}
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
@@ -133,11 +135,11 @@ export default function Login() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Signing in...</span>
+                  <span>{t('loggingInBtn', 'Signing in...')}</span>
                 </>
               ) : (
                 <>
-                  <span>Sign In</span>
+                  <span>{t('loginBtn', 'Log In')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -148,12 +150,12 @@ export default function Login() {
           <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 text-center">
             <div className="flex items-center justify-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
               <ShieldCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-              <span>Passwords securely hashed with bcrypt</span>
+              <span>{t('passwordSecurityNote', 'Passwords securely hashed with bcrypt')}</span>
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-3 font-medium">
-              Don't have an account yet?{' '}
+              {t('dontHaveAccount', "Don't have an account?")}{' '}
               <Link to="/register" className="font-semibold text-teal-600 dark:text-teal-400 hover:underline">
-                Register here
+                {t('registerHere', 'Register here')}
               </Link>
             </p>
           </div>
@@ -162,7 +164,7 @@ export default function Login() {
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-slate-800 py-4 text-center text-xs text-slate-500 dark:text-slate-400">
-        ReadyDocs • Secure Authentication with JWT & Bcrypt
+        ReadyDocs • {t('passwordSecurityNote', 'Secure Authentication with JWT & Bcrypt')}
       </footer>
     </div>
   );
