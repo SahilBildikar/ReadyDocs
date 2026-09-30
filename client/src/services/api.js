@@ -1,13 +1,21 @@
+import { supabase } from '../lib/supabaseClient';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 /**
- * Standard fetch wrapper that automatically injects the JWT Bearer token
- * @param {string} endpoint - API endpoint relative to base URL (e.g. '/auth/login')
+ * Standard fetch wrapper that automatically injects the Supabase Auth Bearer token
+ * @param {string} endpoint - API endpoint relative to base URL (e.g. '/profiles')
  * @param {RequestInit} options - fetch options
  * @returns {Promise<any>}
  */
 export async function apiRequest(endpoint, options = {}) {
-  const token = localStorage.getItem('readydocs_token');
+  let token = null;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    token = session?.access_token || localStorage.getItem('readydocs_token');
+  } catch {
+    token = localStorage.getItem('readydocs_token');
+  }
 
   const headers = {
     'Content-Type': 'application/json',
@@ -37,23 +45,6 @@ export async function apiRequest(endpoint, options = {}) {
 }
 
 export const authApi = {
-  register: (name, email, password) =>
-    apiRequest('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ name, email, password })
-    }),
-
-  login: (email, password) =>
-    apiRequest('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password })
-    }),
-
-  logout: () =>
-    apiRequest('/auth/logout', {
-      method: 'POST'
-    }),
-
   getMe: () =>
     apiRequest('/auth/me', {
       method: 'GET'

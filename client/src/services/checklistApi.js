@@ -1,7 +1,15 @@
-const API_BASE = 'http://localhost:5000/api';
+import { supabase } from '../lib/supabaseClient';
 
-function getAuthHeader() {
-  const token = localStorage.getItem('readydocs_token');
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+async function getAuthHeader() {
+  let token = null;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    token = session?.access_token || localStorage.getItem('readydocs_token');
+  } catch {
+    token = localStorage.getItem('readydocs_token');
+  }
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -20,11 +28,12 @@ export async function fetchHelpGuide(guideId) {
 }
 
 export async function generateChecklist({ serviceType, profileId, answers }) {
+  const authHeaders = await getAuthHeader();
   const res = await fetch(`${API_BASE}/checklists/generate`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeader()
+      ...authHeaders
     },
     body: JSON.stringify({ serviceType, profileId, answers })
   });
@@ -34,11 +43,12 @@ export async function generateChecklist({ serviceType, profileId, answers }) {
 }
 
 export async function saveChecklist({ serviceType, profileId, institutionName, sourceUrl, answers, items }) {
+  const authHeaders = await getAuthHeader();
   const res = await fetch(`${API_BASE}/checklists`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeader()
+      ...authHeaders
     },
     body: JSON.stringify({ serviceType, profileId, institutionName, sourceUrl, answers, items })
   });
@@ -48,11 +58,12 @@ export async function saveChecklist({ serviceType, profileId, institutionName, s
 }
 
 export async function updateChecklistItemStatus({ checklistId, itemId, status, notes = null }) {
+  const authHeaders = await getAuthHeader();
   const res = await fetch(`${API_BASE}/checklists/${checklistId}/items/${itemId}/status`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeader()
+      ...authHeaders
     },
     body: JSON.stringify({ status, notes })
   });
@@ -67,8 +78,9 @@ export async function fetchChecklists({ serviceType = '', status = '', search = 
   if (status) params.append('status', status);
   if (search) params.append('search', search);
 
+  const authHeaders = await getAuthHeader();
   const res = await fetch(`${API_BASE}/checklists?${params.toString()}`, {
-    headers: getAuthHeader()
+    headers: authHeaders
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Failed to fetch checklists');
@@ -76,8 +88,9 @@ export async function fetchChecklists({ serviceType = '', status = '', search = 
 }
 
 export async function fetchChecklistById(id) {
+  const authHeaders = await getAuthHeader();
   const res = await fetch(`${API_BASE}/checklists/${id}`, {
-    headers: getAuthHeader()
+    headers: authHeaders
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Failed to fetch checklist');
@@ -85,9 +98,10 @@ export async function fetchChecklistById(id) {
 }
 
 export async function deleteChecklist(id) {
+  const authHeaders = await getAuthHeader();
   const res = await fetch(`${API_BASE}/checklists/${id}`, {
     method: 'DELETE',
-    headers: getAuthHeader()
+    headers: authHeaders
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Failed to delete checklist');
@@ -102,9 +116,10 @@ export async function uploadAndClassifyDocument({ file, checklistId, targetItemI
     formData.append('targetItemId', targetItemId);
   }
 
+  const authHeaders = await getAuthHeader();
   const res = await fetch(`${API_BASE}/documents/upload-and-classify`, {
     method: 'POST',
-    headers: getAuthHeader(), // Note: do NOT set Content-Type header so browser sets multipart boundary
+    headers: authHeaders, // Note: do NOT set Content-Type header so browser sets multipart boundary
     body: formData
   });
 
@@ -114,9 +129,10 @@ export async function uploadAndClassifyDocument({ file, checklistId, targetItemI
 }
 
 export async function deleteDocument(id) {
+  const authHeaders = await getAuthHeader();
   const res = await fetch(`${API_BASE}/documents/${id}`, {
     method: 'DELETE',
-    headers: getAuthHeader()
+    headers: authHeaders
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Failed to delete document');

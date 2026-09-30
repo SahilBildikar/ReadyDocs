@@ -1,70 +1,51 @@
-import { supabase } from '../config/supabase.js';
+import { supabase, isSupabaseConfigured } from '../config/supabase.js';
 import crypto from 'crypto';
 
-// In-development in-memory mock store (strictly disallowed in production)
-const mockDocuments = new Map();
+function assertSupabase() {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('[Database Error] Live Supabase PostgreSQL database is required. In-memory fallback is disabled.');
+  }
+}
 
 export const DocumentModel = {
   /**
    * List all documents attached to a checklist for a user.
    */
   async listByChecklist(checklistId, userId) {
-    if (supabase) {
-      const { data, error } = await supabase
-        .from('documents')
-        .select('*')
-        .eq('checklist_id', checklistId)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+    assertSupabase();
 
-      if (error) {
-        if (process.env.NODE_ENV === 'production') {
-          throw new Error(`Database error fetching documents: ${error.message}`);
-        }
-        console.warn('[DocumentModel] Supabase query error, falling back to dev store:', error.message);
-      } else {
-        return data || [];
-      }
+    const { data, error } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('checklist_id', checklistId)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[DocumentModel] Supabase query error:', error.message);
+      throw new Error(`Database error fetching documents: ${error.message}`);
     }
-
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Production environment requires active Supabase PostgreSQL connection.');
-    }
-
-    return Array.from(mockDocuments.values())
-      .filter(d => d.checklist_id === checklistId && d.user_id === userId)
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return data || [];
   },
 
   /**
    * Get a single document record by ID.
    */
   async getById(id, userId) {
-    if (supabase) {
-      const { data, error } = await supabase
-        .from('documents')
-        .select('*')
-        .eq('id', id)
-        .eq('user_id', userId)
-        .single();
+    assertSupabase();
 
-      if (error) {
-        if (error.code === 'PGRST116') return null;
-        if (process.env.NODE_ENV === 'production') {
-          throw new Error(`Database error fetching document: ${error.message}`);
-        }
-      } else {
-        return data;
-      }
+    const { data, error } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw new Error(`Database error fetching document: ${error.message}`);
     }
-
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Production environment requires active Supabase PostgreSQL connection.');
-    }
-
-    const doc = mockDocuments.get(id);
-    if (!doc || doc.user_id !== userId) return null;
-    return doc;
+    return data;
   },
 
   /**
@@ -82,6 +63,8 @@ export const DocumentModel = {
     matchedChecklistItem,
     status = 'uploaded'
   }) {
+    assertSupabase();
+
     const newDoc = {
       id: crypto.randomUUID(),
       user_id: userId,
@@ -97,58 +80,37 @@ export const DocumentModel = {
       updated_at: new Date().toISOString()
     };
 
-    if (supabase) {
-      const { data, error } = await supabase
-        .from('documents')
-        .insert([newDoc])
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from('documents')
+      .insert([newDoc])
+      .select()
+      .single();
 
-      if (error) {
-        if (process.env.NODE_ENV === 'production') {
-          throw new Error(`Database error creating document record: ${error.message}`);
-        }
-        console.warn('[DocumentModel] Supabase insert failed, saving to dev store:', error.message);
-      } else {
-        return data;
-      }
+    if (error) {
+      console.error('[DocumentModel] Supabase insert failed:', error.message);
+      throw new Error(`Database error creating document record: ${error.message}`);
     }
 
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Production environment requires active Supabase PostgreSQL connection.');
-    }
-
-    mockDocuments.set(newDoc.id, newDoc);
-    return newDoc;
+    return data;
   },
 
   /**
    * Delete a document record.
    */
   async delete(id, userId) {
-    if (supabase) {
-      const { error } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId);
+    assertSupabase();
 
-      if (error) {
-        if (process.env.NODE_ENV === 'production') {
-          throw new Error(`Database error deleting document: ${error.message}`);
-        }
-      } else {
-        return true;
-      }
+    const { error } = await supabase
+      .from('documents')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('[DocumentModel] Supabase delete failed:', error.message);
+      throw new Error(`Database error deleting document: ${error.message}`);
     }
 
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Production environment requires active Supabase PostgreSQL connection.');
-    }
-
-    const doc = mockDocuments.get(id);
-    if (!doc || doc.user_id !== userId) return false;
-    mockDocuments.delete(id);
     return true;
   }
 };

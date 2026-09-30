@@ -1,7 +1,4 @@
-import jwt from 'jsonwebtoken';
-import { UserModel } from '../models/userModel.js';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'readydocs_dev_jwt_secret_fallback_key_2026';
+import { supabase, isSupabaseConfigured } from '../config/supabase.js';
 
 export const requireAuth = async (req, res, next) => {
   try {
@@ -14,7 +11,7 @@ export const requireAuth = async (req, res, next) => {
       });
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = authHeader.split(' ')[1]?.trim();
 
     if (!token) {
       return res.status(401).json({
@@ -23,37 +20,29 @@ export const requireAuth = async (req, res, next) => {
       });
     }
 
-    let decoded;
-    try {
-      decoded = jwt.verify(token, JWT_SECRET);
-    } catch (jwtErr) {
-      if (jwtErr.name === 'TokenExpiredError') {
-        return res.status(401).json({
-          error: 'Unauthorized',
-          message: 'Token has expired. Please log in again.'
-        });
-      }
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'Invalid authentication token.'
+    if (!isSupabaseConfigured || !supabase) {
+      return res.status(500).json({
+        error: 'Configuration Error',
+        message: 'Supabase authentication is not configured on the server.'
       });
     }
 
-    // Look up user in database
-    const user = await UserModel.findById(decoded.id);
+    // Validate Supabase access token directly with Supabase Auth
+    const { data: { user }, error } = await supabase.auth.getUser(token);
 
-    if (!user) {
+    if (error || !user) {
       return res.status(401).json({
         error: 'Unauthorized',
-        message: 'User account belonging to this token no longer exists.'
+        message: error?.message || 'Invalid or expired authentication session.'
       });
     }
 
-    // Attach user to request object (excluding sensitive data)
+    // Attach user to request object using authentic Supabase auth.users ID
     req.user = {
       id: user.id,
-      name: user.name,
       email: user.email,
+      name: user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+      metadata: user.user_metadata,
       createdAt: user.created_at,
       updatedAt: user.updated_at
     };

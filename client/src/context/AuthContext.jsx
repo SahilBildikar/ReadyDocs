@@ -1,94 +1,95 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authApi } from '../services/api';
+import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext(null);
 
+function formatUser(sbUser) {
+  if (!sbUser) return null;
+  return {
+    id: sbUser.id,
+    email: sbUser.email,
+    name: sbUser.user_metadata?.name || sbUser.user_metadata?.full_name || sbUser.email?.split('@')[0] || 'User',
+    ...sbUser.user_metadata
+  };
+}
+
 export function AuthProvider({ children }) {
-  // Read persisted user safely on initial mount
-  const [user, setUser] = useState(() => {
-    try {
-      const stored = localStorage.getItem('readydocs_user');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
-
-  const [token, setToken] = useState(() => {
-    try {
-      return localStorage.getItem('readydocs_token') || null;
-    } catch {
-      return null;
-    }
-  });
-
-  // isInitializing ensures protected routes and pages do NOT render prematurely
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Validate stored token against backend on app boot
+  // Sync Supabase Auth session on mount and listen to changes
   useEffect(() => {
     let isMounted = true;
 
-    const initAuth = async () => {
-      const savedToken = localStorage.getItem('readydocs_token');
-
-      if (!savedToken) {
-        if (isMounted) {
-          setToken(null);
-          setUser(null);
-          setIsInitializing(false);
-        }
-        return;
+    // 1. Initial session check
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!isMounted) return;
+      if (error) {
+        console.warn('[AuthContext] Error getting initial session:', error.message);
       }
-
-      try {
-        const data = await authApi.getMe();
-        if (isMounted) {
-          if (data && data.user) {
-            setUser(data.user);
-            setToken(savedToken);
-            localStorage.setItem('readydocs_user', JSON.stringify(data.user));
-          } else {
-            throw new Error('Invalid user profile response');
-          }
-        }
-      } catch (err) {
-        console.warn('[Auth] Stored session is invalid or expired:', err.message);
-        if (isMounted) {
-          localStorage.removeItem('readydocs_token');
-          localStorage.removeItem('readydocs_user');
-          setToken(null);
-          setUser(null);
-        }
-      } finally {
-        if (isMounted) {
-          setIsInitializing(false);
-        }
+      if (session) {
+        const formatted = formatUser(session.user);
+        setUser(formatted);
+        setToken(session.access_token);
+        localStorage.setItem('readydocs_token', session.access_token);
+        localStorage.setItem('readydocs_user', JSON.stringify(formatted));
+      } else {
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('readydocs_token');
+        localStorage.removeItem('readydocs_user');
       }
-    };
+      setIsInitializing(false);
+    });
 
-    initAuth();
+    // 2. Subscribe to auth state updates (sign in, sign out, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
+      if (session) {
+        const formatted = formatUser(session.user);
+        setUser(formatted);
+        setToken(session.access_token);
+        localStorage.setItem('readydocs_token', session.access_token);
+        localStorage.setItem('readydocs_user', JSON.stringify(formatted));
+      } else {
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('readydocs_token');
+        localStorage.removeItem('readydocs_user');
+      }
+      setIsInitializing(false);
+    });
 
     return () => {
       isMounted = false;
+      subscription?.unsubscribe();
     };
   }, []);
 
   const login = useCallback(async (email, password) => {
     setAuthLoading(true);
     try {
-      const data = await authApi.login(email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-      // 1. Immediately persist token & user synchronously to localStorage
-      localStorage.setItem('readydocs_token', data.token);
-      localStorage.setItem('readydocs_user', JSON.stringify(data.user));
+      if (error) {
+        throw new Error(error.message);
+      }
 
-      // 2. Update React auth states
-      setToken(data.token);
-      setUser(data.user);
+      if (data?.session) {
+        const formatted = formatUser(data.user);
+        setUser(formatted);
+        setToken(data.session.access_token);
+        localStorage.setItem('readydocs_token', data.session.access_token);
+        localStorage.setItem('readydocs_user', JSON.stringify(formatted));
+        return formatted;
+      }
 
-      return data.user;
+      return formatUser(data?.user);
     } finally {
       setAuthLoading(false);
     }
@@ -97,38 +98,51 @@ export function AuthProvider({ children }) {
   const register = useCallback(async (name, email, password) => {
     setAuthLoading(true);
     try {
-      const data = await authApi.register(name, email, password);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            full_name: name
+          }
+        }
+      });
 
-      // 1. Persist token & user synchronously
-      localStorage.setItem('readydocs_token', data.token);
-      localStorage.setItem('readydocs_user', JSON.stringify(data.user));
+      if (error) {
+        throw new Error(error.message);
+      }
 
-      // 2. Update React auth states
-      setToken(data.token);
-      setUser(data.user);
+      if (data?.session) {
+        const formatted = formatUser(data.user);
+        setUser(formatted);
+        setToken(data.session.access_token);
+        localStorage.setItem('readydocs_token', data.session.access_token);
+        localStorage.setItem('readydocs_user', JSON.stringify(formatted));
+        return formatted;
+      }
 
-      return data.user;
+      return formatUser(data?.user);
     } finally {
       setAuthLoading(false);
     }
   }, []);
 
-  const logout = useCallback(() => {
-    // 1. Clear local storage immediately
+  const logout = useCallback(async () => {
     try {
       localStorage.removeItem('readydocs_token');
       localStorage.removeItem('readydocs_user');
-    } catch (e) {
-      console.warn('Failed to clear localStorage on logout', e);
-    }
+      localStorage.removeItem('readydocs_active_profile');
+    } catch (_) {}
 
-    // 2. Clear state immediately
-    setToken(null);
     setUser(null);
-    setAuthLoading(false);
+    setToken(null);
 
-    // 3. Fire-and-forget backend notification without blocking UI
-    authApi.logout().catch(() => {});
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn('[AuthContext] SignOut error:', e.message);
+    }
   }, []);
 
   const value = {

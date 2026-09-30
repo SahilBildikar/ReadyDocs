@@ -1,7 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+// Support both running from workspace root and running from server/ directory
 dotenv.config();
+try {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  dotenv.config({ path: path.join(__dirname, '../../.env') });
+} catch (_) {}
 
 const supabaseUrl = process.env.SUPABASE_URL?.trim();
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
@@ -24,19 +31,11 @@ export const supabase = isSupabaseConfigured
     })
   : null;
 
-if (isSupabaseConfigured) {
-  console.log('[Database] Supabase client initialized with Service Role Key.');
-} else {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error(
-      '[FATAL ERROR] Supabase PostgreSQL configuration is required in production! ' +
-      'In-memory fallback is strictly disabled in production. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
-    );
-  }
-  console.warn(
-    '[Database] [DEVELOPMENT ONLY] Live Supabase credentials are not configured in server/.env yet.\n' +
-    'The server is operating in development mode with an in-memory repository fallback.\n' +
-    'In-memory fallback is automatically disabled in production.\n' +
-    'To connect your live Supabase database, set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in server/.env.'
+if (!isSupabaseConfigured) {
+  throw new Error(
+    '[FATAL CONFIGURATION ERROR] Supabase PostgreSQL configuration is required! ' +
+    'In-memory fallback is disabled. Please verify SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in server/.env.'
   );
 }
+
+console.log('[Database] Supabase client initialized with Service Role Key.');

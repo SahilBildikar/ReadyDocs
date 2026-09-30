@@ -138,13 +138,14 @@ BEGIN
     is_archived
   )
   VALUES (
-    extensions.gen_random_uuid(),
+    pg_catalog.gen_random_uuid(),
     NEW.id,
     'Primary Profile',
-    pg_catalog.coalesce(
+    COALESCE(
       NEW.raw_user_meta_data ->> 'name',
       NEW.raw_user_meta_data ->> 'full_name',
-      pg_catalog.split_part(NEW.email, '@', 1)
+      pg_catalog.nullif(pg_catalog.split_part(NEW.email, '@', 1), ''),
+      'Primary User'
     ),
     NEW.email,
     TRUE,
