@@ -392,52 +392,52 @@ export default function ChecklistDetail() {
         </div>
 
         {/* Top Header Card */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs mb-6 max-w-full min-w-0">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800 min-w-0">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider">
                   {checklist.institution_name}
                 </span>
                 <span>•</span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-slate-500 dark:text-slate-400 break-words">
                   {t('profileHolderLabel', 'Profile')}: {checklist.profile?.profile_name || 'Assigned Profile'} ({checklist.profile?.full_name || 'Holder'})
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white break-words">
                 {checklist.result_json?.serviceTitle || 'Document Readiness Checklist'}
               </h1>
             </div>
 
             {/* Action buttons & Status Badge */}
-            <div className="shrink-0 flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
               <button
                 type="button"
                 onClick={handleDownloadPDF}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs hover:bg-slate-800 transition cursor-pointer shadow-xs"
+                className="btn-toolbar inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs hover:bg-slate-800 transition cursor-pointer shadow-xs max-w-full"
                 title="Download printable A4 PDF"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-3.5 h-3.5 shrink-0" />
                 <span>{t('downloadPdfBtn', 'PDF')}</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleShareWhatsApp}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer shadow-xs"
+                className="btn-toolbar inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer shadow-xs max-w-full"
                 title="Share summary on WhatsApp"
               >
-                <Share2 className="w-3.5 h-3.5" />
+                <Share2 className="w-3.5 h-3.5 shrink-0" />
                 <span>{t('whatsappBtn', 'WhatsApp')}</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleCopyChecklist}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs hover:bg-slate-100 transition cursor-pointer"
+                className="btn-toolbar inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs hover:bg-slate-100 transition cursor-pointer max-w-full"
                 title="Copy plain text"
               >
-                <Copy className="w-3.5 h-3.5" />
+                <Copy className="w-3.5 h-3.5 shrink-0" />
                 <span>{t('copyBtn', 'Copy')}</span>
               </button>
 
@@ -446,7 +446,7 @@ export default function ChecklistDetail() {
           </div>
 
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 min-w-0 max-w-full">
             <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{t('totalItems', 'Total Items')}</span>
               <span className="text-xl font-extrabold text-slate-900 dark:text-white mt-1 block">{items.length}</span>
@@ -812,7 +812,7 @@ export default function ChecklistDetail() {
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-center">
+                        <div className="flex flex-wrap items-center gap-2 self-start sm:self-center min-w-0 max-w-full">
                           {getItemBadge(item.status)}
 
                           {item.helpGuideId && (
@@ -823,10 +823,10 @@ export default function ChecklistDetail() {
                                 itemId: item.id,
                                 itemTitle: item.title
                               })}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl border border-teal-300 dark:border-teal-700/80 bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 text-xs font-bold hover:bg-teal-100 dark:hover:bg-teal-900/60 transition cursor-pointer"
+                              className="btn-toolbar inline-flex items-center gap-1 px-2.5 py-1 rounded-xl border border-teal-300 dark:border-teal-700/80 bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 text-xs font-bold hover:bg-teal-100 dark:hover:bg-teal-900/60 transition cursor-pointer max-w-full"
                               title="View official step-by-step assistance"
                             >
-                              <HelpCircle className="w-3.5 h-3.5" />
+                              <HelpCircle className="w-3.5 h-3.5 shrink-0" />
                               <span>{t('howDoIGetThisBtn', 'How do I get this?')}</span>
                             </button>
                           )}

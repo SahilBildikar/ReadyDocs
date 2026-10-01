@@ -15,39 +15,66 @@ body.senior-mode {
 }
 
 body.senior-mode h1 {
-  font-size: 2.75rem !important;
-  line-height: 1.2 !important;
+  font-size: 2.25rem !important;
+  line-height: 1.25 !important;
 }
 
 body.senior-mode h2 {
-  font-size: 2.25rem !important;
-  line-height: 1.2 !important;
+  font-size: 1.75rem !important;
+  line-height: 1.25 !important;
 }
 
-/* Primary/Large CTAs and Interactive Buttons */
+/* Strict containment for cards & flex containers in Senior Mode */
+body.senior-mode .rounded-3xl,
+body.senior-mode .rounded-2xl {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Base button sizing in Senior Citizen Mode - accessible, wrapped, and contained */
 body.senior-mode button, 
-body.senior-mode a.btn-cta {
+body.senior-mode a.btn-cta,
+body.senior-mode [role="button"] {
+  box-sizing: border-box !important;
+  max-width: 100% !important;
   min-height: 48px;
-  font-size: 1.125rem !important;
+  font-size: 1rem !important;
   font-weight: 700 !important;
-  padding: 0.75rem 1.25rem !important;
-  max-width: 100%;
+  padding: 0.625rem 1rem !important;
+  white-space: normal !important;
+  word-break: break-word;
+  line-height: 1.35 !important;
 }
 
-/* Compact and Grid Buttons in Senior Mode */
+/* Toolbar, action bar, compact, and grid buttons in Senior Mode */
+body.senior-mode .btn-toolbar,
 body.senior-mode .btn-compact,
 body.senior-mode .grid button {
   min-height: 44px;
-  font-size: 1rem !important;
-  padding: 0.5rem 0.75rem !important;
+  font-size: 0.95rem !important;
+  padding: 0.5rem 0.85rem !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
 }
 
 /* Square Icon Buttons (Trash, Close, Nav Icons) */
 body.senior-mode .btn-icon,
 body.senior-mode button:has(svg:only-child) {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0.5rem !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* Ensure flex containers allow wrapping and do not force overflow */
+body.senior-mode .flex {
+  min-width: 0;
 }
 
 /* Custom scrollbars */

@@ -768,66 +768,66 @@ export default function ChecklistGenerator() {
         {generatedChecklist && savedChecklistRecord && (
           <div className="space-y-6">
             {/* Header Banner */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 mb-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{t('checklistResultBadge', 'Personalized Checklist Generated & Saved')}</span>
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs max-w-full min-w-0">
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800 min-w-0">
+                <div className="min-w-0 flex-1">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 mb-2 max-w-full">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span className="truncate">{t('checklistResultBadge', 'Personalized Checklist Generated & Saved')}</span>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white break-words">
                     {savedChecklistRecord.institution_name}
                   </h1>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium break-words">
                     {t('profilePrefix', 'Profile')}: {activeProfile?.profile_name} ({activeProfile?.full_name})
                   </p>
                 </div>
 
                 {/* Primary Action Toolbar */}
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
                   <button
                     type="button"
                     onClick={handleDownloadPDF}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs hover:bg-slate-800 transition cursor-pointer shadow-xs"
+                    className="btn-toolbar inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs hover:bg-slate-800 transition cursor-pointer shadow-xs max-w-full"
                     title="Download printable A4 PDF"
                   >
-                    <Download className="w-3.5 h-3.5" />
+                    <Download className="w-3.5 h-3.5 shrink-0" />
                     <span>{t('downloadPdfBtn', 'Download PDF')}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleShareWhatsApp}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer shadow-xs"
+                    className="btn-toolbar inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer shadow-xs max-w-full"
                     title="Share summary on WhatsApp"
                   >
-                    <Share2 className="w-3.5 h-3.5" />
+                    <Share2 className="w-3.5 h-3.5 shrink-0" />
                     <span>{t('whatsappBtn', 'WhatsApp')}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleCopyChecklist}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs hover:bg-slate-100 transition cursor-pointer"
+                    className="btn-toolbar inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs hover:bg-slate-100 transition cursor-pointer max-w-full"
                     title="Copy plain text"
                   >
-                    <Copy className="w-3.5 h-3.5" />
+                    <Copy className="w-3.5 h-3.5 shrink-0" />
                     <span>{t('copyBtn', 'Copy')}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => navigate(`/checklists/${savedChecklistRecord.id}`)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition cursor-pointer"
+                    className="btn-toolbar inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition cursor-pointer max-w-full"
                   >
                     <span>{t('uploadDocsBtn', 'Upload Documents')}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                   </button>
                 </div>
               </div>
 
               {/* Source & Verified Stamp */}
-              <div className="mt-4 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2">
+              <div className="mt-4 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2 min-w-0 max-w-full">
                 <span>{t('verifiedSourceLabel', 'Verified Official Source:')} <a href={savedChecklistRecord.source_url} target="_blank" rel="noreferrer" className="text-teal-600 font-semibold underline">{savedChecklistRecord.source_url}</a></span>
                 <span>{t('lastVerifiedLabel', 'Last Verified:')} 2026-09-30</span>
               </div>
@@ -837,7 +837,7 @@ export default function ChecklistGenerator() {
             <PrivacyBanner />
 
             {/* Checklist Items Display */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs max-w-full min-w-0">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
                 {t('docRequirementsHeading', 'Personalized Document Requirements')} ({savedChecklistRecord.result_json?.items?.length || 0})
               </h2>
@@ -847,27 +847,27 @@ export default function ChecklistGenerator() {
                   return (
                     <div
                       key={item.id}
-                      className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0 max-w-full"
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
                         <div className="w-7 h-7 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-200 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
                           {idx + 1}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-bold text-sm text-slate-900 dark:text-white break-words">
                               {item.title}
                             </h3>
                             {item.mandatory && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 shrink-0">
                                 {t('mandatoryBadge', 'Mandatory')}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 font-medium">
+                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 font-medium break-words">
                             {item.explanation}
                           </p>
-                          <div className="mt-2 text-[11px] text-slate-500">
+                          <div className="mt-2 text-[11px] text-slate-500 break-words">
                             <span className="font-semibold text-slate-700 dark:text-slate-300">{t('acceptedPapersLabel', 'Accepted:')} </span>
                             {item.acceptableDocuments?.join(', ')}
                           </div>
@@ -875,7 +875,7 @@ export default function ChecklistGenerator() {
                       </div>
 
                       {/* Right Side Status & Help Button */}
-                      <div className="flex flex-wrap items-center gap-2 self-start sm:self-center shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 self-start sm:self-center min-w-0 max-w-full">
                         {getItemBadge(item.status)}
 
                         {/* "How do I get this?" action button */}
@@ -887,9 +887,9 @@ export default function ChecklistGenerator() {
                               itemId: item.id,
                               itemTitle: item.title
                             })}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-teal-300 dark:border-teal-700/80 bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 text-xs font-bold hover:bg-teal-100 dark:hover:bg-teal-900/60 transition cursor-pointer"
+                            className="btn-toolbar inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-teal-300 dark:border-teal-700/80 bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 text-xs font-bold hover:bg-teal-100 dark:hover:bg-teal-900/60 transition cursor-pointer max-w-full"
                           >
-                            <HelpCircle className="w-3.5 h-3.5" />
+                            <HelpCircle className="w-3.5 h-3.5 shrink-0" />
                             <span>{t('howDoIGetThisBtn', 'How do I get this?')}</span>
                           </button>
                         )}
