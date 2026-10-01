@@ -134,6 +134,12 @@ export default function ChecklistGenerator() {
 
   const getOptionLabel = (qId, opt) => {
     if (!opt) return '';
+
+    // Bank Account Opening
+    if (qId === 'bank_name') {
+      if (opt.value === 'State Bank of India (SBI)') return t('opt_bank_sbi', opt.label);
+      if (opt.value === 'other') return t('opt_bank_other', opt.label);
+    }
     if (qId === 'account_type') {
       if (opt.value === 'savings') return t('opt_savings', opt.label);
       if (opt.value === 'current') return t('opt_current', opt.label);
@@ -145,26 +151,68 @@ export default function ChecklistGenerator() {
     if (qId === 'has_pan') {
       return opt.value === true ? t('opt_yes_pan', opt.label) : t('opt_no_pan', opt.label);
     }
+    if (qId === 'address_matches_id' || qId === 'current_address_matches_permanent') {
+      return opt.value === true ? t('opt_yes_address_matches', t('opt_yes_address', opt.label)) : t('opt_no_address_matches', t('opt_no_address', opt.label));
+    }
+    if (qId === 'has_id_proof') {
+      return opt.value === true ? t('opt_yes_id_proof', opt.label) : t('opt_no_id_proof', opt.label);
+    }
     if (qId === 'has_aadhaar') {
       return opt.value === true ? t('opt_yes_aadhaar', opt.label) : t('opt_no_aadhaar', opt.label);
     }
-    if (qId === 'current_address_matches_permanent') {
-      return opt.value === true ? t('opt_yes_address', opt.label) : t('opt_no_address', opt.label);
+
+    // SPPU College Admission
+    if (qId === 'institution_name') {
+      if (opt.value === 'Savitribai Phule Pune University (SPPU)') return t('opt_inst_sppu', opt.label);
+      if (opt.value === 'Mumbai University') return t('opt_inst_mumbai', opt.label);
+      if (opt.value === 'COEP Technological University') return t('opt_inst_coep', opt.label);
+      if (opt.value === 'Fergusson College Pune') return t('opt_inst_fergusson', opt.label);
+      if (opt.value === 'other') return t('opt_inst_other', opt.label);
     }
-    if (qId === 'course_level') {
-      if (opt.value === 'ug' || opt.value === 'undergraduate') return t('opt_ug', opt.label);
-      if (opt.value === 'pg' || opt.value === 'postgraduate') return t('opt_pg', opt.label);
-      if (opt.value === 'diploma') return t('opt_diploma', opt.label);
+    if (qId === 'education_level' || qId === 'course_level') {
+      if (opt.value === 'ug' || opt.value === 'undergraduate') return t('opt_edu_ug', t('opt_ug', opt.label));
+      if (opt.value === 'pg' || opt.value === 'postgraduate') return t('opt_edu_pg', t('opt_pg', opt.label));
+      if (opt.value === 'diploma') return t('opt_edu_diploma', t('opt_diploma', opt.label));
+      if (opt.value === 'certificate') return t('opt_edu_certificate', opt.label);
     }
-    if (qId === 'is_maharashtra_domicile') {
-      return opt.value === true ? t('opt_yes_domicile', opt.label) : t('opt_no_domicile', opt.label);
+    if (qId === 'is_maharashtra' || qId === 'is_maharashtra_domicile') {
+      return opt.value === true ? t('opt_yes_maharashtra', t('opt_yes_domicile', opt.label)) : t('opt_no_maharashtra', t('opt_no_domicile', opt.label));
     }
-    if (qId === 'category') {
-      if (opt.value === 'general' || opt.value === 'open') return t('opt_general', opt.label);
-      if (opt.value === 'reserved') return t('opt_reserved', opt.label);
+    if (qId === 'has_class_10') {
+      return opt.value === true ? t('opt_yes_class_10', opt.label) : t('opt_no_class_10', opt.label);
+    }
+    if (qId === 'has_class_12') {
+      return opt.value === true ? t('opt_yes_class_12', opt.label) : t('opt_no_class_12', opt.label);
+    }
+    if (qId === 'has_category_quota' || qId === 'category') {
+      if (opt.value === 'open' || opt.value === 'general') return t('opt_quota_open', t('opt_general', opt.label));
+      if (opt.value === 'reserved_state' || opt.value === 'reserved') return t('opt_quota_reserved', t('opt_reserved', opt.label));
+      if (opt.value === 'ews') return t('opt_quota_ews', opt.label);
     }
     if (qId === 'has_previous_marksheet') {
       return opt.value === true ? t('opt_yes_marksheet', opt.label) : t('opt_no_marksheet', opt.label);
+    }
+
+    // Insurance Claim
+    if (qId === 'insurance_type') {
+      if (opt.value === 'health') return t('opt_ins_health', opt.label);
+      if (opt.value === 'vehicle') return t('opt_ins_vehicle', opt.label);
+      if (opt.value === 'property') return t('opt_ins_property', opt.label);
+    }
+    if (qId === 'incident_type') {
+      if (opt.value === 'hospital') return t('opt_inc_hospital', opt.label);
+      if (opt.value === 'accident') return t('opt_inc_accident', opt.label);
+      if (opt.value === 'damage') return t('opt_inc_damage', opt.label);
+      if (opt.value === 'theft') return t('opt_inc_theft', opt.label);
+    }
+    if (qId === 'has_bills') {
+      return opt.value === true ? t('opt_yes_bills', opt.label) : t('opt_no_bills', opt.label);
+    }
+    if (qId === 'has_reports') {
+      return opt.value === true ? t('opt_yes_reports', opt.label) : t('opt_no_reports', opt.label);
+    }
+    if (qId === 'has_fir') {
+      return opt.value === true ? t('opt_yes_fir', opt.label) : t('opt_no_fir', opt.label);
     }
     if (qId === 'claim_type') {
       if (opt.value === 'reimbursement') return t('opt_reimbursement', opt.label);
@@ -282,7 +330,7 @@ export default function ChecklistGenerator() {
         }
       });
     }
-    showToast('Document status updated.');
+    showToast(t('documentStatusUpdatedToast', 'Document status updated.'));
   };
 
   const getItemBadge = (status) => {
@@ -296,13 +344,13 @@ export default function ChecklistGenerator() {
       case 'application_in_progress':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300">
-            <Clock className="w-3 h-3" /> In Progress
+            <Clock className="w-3 h-3" /> {t('inProgress', 'In Progress')}
           </span>
         );
       case 'ready_to_upload':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300">
-            <CheckSquare className="w-3 h-3" /> Ready to Upload
+            <CheckSquare className="w-3 h-3" /> {t('readyToUpload', 'Ready to Upload')}
           </span>
         );
       case 'not_applicable':
@@ -504,7 +552,7 @@ export default function ChecklistGenerator() {
                 /* Service Specific Question */
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 block mb-1">
-                    {currentService.title}
+                    {t(`service_${currentService.id}_title`, currentService.title)}
                   </span>
                   <h2 className={`font-extrabold text-slate-900 dark:text-white mb-6 ${
                     isSeniorMode ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'
@@ -593,7 +641,7 @@ export default function ChecklistGenerator() {
                         type="text"
                         value={answers[currentQuestion.id] || currentQuestion.defaultValue || ''}
                         onChange={(e) => handleAnswerSelect(currentQuestion.id, e.target.value)}
-                        placeholder={t('typeHerePlaceholder', 'Type here...')}
+                        placeholder={currentQuestion.id === 'course_name' ? t('courseNamePlaceholder', currentQuestion.placeholder || 'e.g. Computer Engineering, B.Sc Computer Science, MBA') : t('typeHerePlaceholder', 'Type here...')}
                         className="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:outline-none"
                       />
                     </div>
@@ -731,7 +779,7 @@ export default function ChecklistGenerator() {
                     {savedChecklistRecord.institution_name}
                   </h1>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                    Profile: {activeProfile?.profile_name} ({activeProfile?.full_name})
+                    {t('profilePrefix', 'Profile')}: {activeProfile?.profile_name} ({activeProfile?.full_name})
                   </p>
                 </div>
 
@@ -827,7 +875,7 @@ export default function ChecklistGenerator() {
                       </div>
 
                       {/* Right Side Status & Help Button */}
-                      <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 self-start sm:self-center shrink-0">
                         {getItemBadge(item.status)}
 
                         {/* "How do I get this?" action button */}

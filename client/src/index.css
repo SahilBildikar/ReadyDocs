@@ -24,11 +24,30 @@ body.senior-mode h2 {
   line-height: 1.2 !important;
 }
 
+/* Primary/Large CTAs and Interactive Buttons */
 body.senior-mode button, 
 body.senior-mode a.btn-cta {
-  padding: 1rem 2rem !important;
-  font-size: 1.25rem !important;
+  min-height: 48px;
+  font-size: 1.125rem !important;
   font-weight: 700 !important;
+  padding: 0.75rem 1.25rem !important;
+  max-width: 100%;
+}
+
+/* Compact and Grid Buttons in Senior Mode */
+body.senior-mode .btn-compact,
+body.senior-mode .grid button {
+  min-height: 44px;
+  font-size: 1rem !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+/* Square Icon Buttons (Trash, Close, Nav Icons) */
+body.senior-mode .btn-icon,
+body.senior-mode button:has(svg:only-child) {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.5rem !important;
 }
 
 /* Custom scrollbars */
