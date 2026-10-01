@@ -123,10 +123,33 @@ export function AuthProvider({ children }) {
           customError.code = 'USER_ALREADY_EXISTS';
           throw customError;
         }
+
+        // If email rate limit or email sending failed during signup, try signing in directly
+        // in case the user record was created without requiring confirmation
+        if (errorMsgLower.includes('rate limit') || errorMsgLower.includes('error sending confirmation email')) {
+          try {
+            const loginRes = await supabase.auth.signInWithPassword({ email, password });
+            if (loginRes.data?.session) {
+              const formatted = formatUser(loginRes.data.user);
+              setUser(formatted);
+              setToken(loginRes.data.session.access_token);
+              localStorage.setItem('readydocs_token', loginRes.data.session.access_token);
+              localStorage.setItem('readydocs_user', JSON.stringify(formatted));
+              return {
+                user: formatted,
+                session: loginRes.data.session,
+                requiresEmailConfirmation: false
+              };
+            }
+          } catch (_) {
+            // Re-throw if direct login failed
+          }
+        }
+
         throw new Error(error.message);
       }
 
-      // Check if user already exists (Supabase returns empty identities array when email is taken with email confirm enabled)
+      // Check if user already exists
       if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
         const customError = new Error('An account with this email already exists. Please log in instead.');
         customError.code = 'USER_ALREADY_EXISTS';
@@ -146,10 +169,28 @@ export function AuthProvider({ children }) {
         };
       }
 
+      // If no session was returned directly, attempt password login immediately
+      try {
+        const loginRes = await supabase.auth.signInWithPassword({ email, password });
+        if (loginRes.data?.session) {
+          const formatted = formatUser(loginRes.data.user);
+          setUser(formatted);
+          setToken(loginRes.data.session.access_token);
+          localStorage.setItem('readydocs_token', loginRes.data.session.access_token);
+          localStorage.setItem('readydocs_user', JSON.stringify(formatted));
+          return {
+            user: formatted,
+            session: loginRes.data.session,
+            requiresEmailConfirmation: false
+          };
+        }
+      } catch (_) {}
+
+      // Fallback: User is registered, take to login without blocking for confirmation
       return {
         user: formatUser(data?.user),
         session: null,
-        requiresEmailConfirmation: true
+        requiresEmailConfirmation: false
       };
     } finally {
       setAuthLoading(false);

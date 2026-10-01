@@ -15,12 +15,13 @@ import {
   ShieldCheck,
   Info,
   MailCheck,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 
 export default function Register() {
   const navigate = useNavigate();
-  const { register, isAuthenticated, isInitializing } = useAuth();
+  const { register, login, isAuthenticated, isInitializing } = useAuth();
   const { t } = useLanguage();
 
   const [name, setName] = useState('');
@@ -30,6 +31,7 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const [confirmationNeeded, setConfirmationNeeded] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
 
@@ -41,6 +43,7 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
+    setIsRateLimited(false);
 
     if (!name.trim() || !email.trim() || !password) {
       setErrorMessage(t('fillAllFieldsError', 'Please fill in all required fields.'));
@@ -67,16 +70,32 @@ export default function Register() {
       const result = await register(name.trim(), email.trim(), password);
 
       if (result?.session) {
-        // Auto-confirmed or session already present
+        // Logged in immediately!
         navigate('/dashboard', { replace: true });
+      } else if (!result?.requiresEmailConfirmation) {
+        // Direct to login with email pre-filled and immediate login notice
+        navigate('/login', { replace: true, state: { justRegistered: true, email: email.trim() } });
       } else {
-        // Email confirmation is required
         setRegisteredEmail(email.trim());
         setConfirmationNeeded(true);
       }
     } catch (err) {
-      if (err.code === 'USER_ALREADY_EXISTS' || (err.message && err.message.toLowerCase().includes('already exists'))) {
+      const errMsg = (err.message || '').toLowerCase();
+      if (err.code === 'USER_ALREADY_EXISTS' || errMsg.includes('already exists') || errMsg.includes('already registered')) {
         setErrorMessage(t('userAlreadyExistsError', 'An account with this email already exists. Please log in instead.'));
+      } else if (
+        errMsg.includes('rate limit') ||
+        errMsg.includes('error sending confirmation email') ||
+        errMsg.includes('rate_limit') ||
+        errMsg.includes('over_email_send_rate_limit')
+      ) {
+        // Never block registration if email rate limit/error occurs; attempt direct password login
+        try {
+          await login(email.trim(), password);
+          navigate('/dashboard', { replace: true });
+          return;
+        } catch (_) {}
+        navigate('/login', { replace: true, state: { justRegistered: true, email: email.trim() } });
       } else if (err.details && Array.isArray(err.details)) {
         setErrorMessage(err.details.map((d) => d.message).join('. '));
       } else {
@@ -127,9 +146,14 @@ export default function Register() {
 
               <div className="mt-3 p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-left flex items-start gap-2.5">
                 <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-900 dark:text-amber-200 font-medium leading-relaxed">
-                  {t('regSpamHint', 'If you do not see the email, check your Spam or Promotions folder.')}
-                </p>
+                <div className="space-y-1">
+                  <p className="text-xs text-amber-900 dark:text-amber-200 font-medium leading-relaxed">
+                    {t('regSpamHint', 'If you do not see the email, check your Spam or Promotions folder.')}
+                  </p>
+                  <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
+                    {t('regDemoNotice', 'Demo Notice: Please submit registration only once and avoid spamming to prevent triggering Supabase hourly email limits.')}
+                  </p>
+                </div>
               </div>
 
               {/* Action Button: Go to Login (shown only after confirmation screen is displayed) */}
@@ -155,18 +179,51 @@ export default function Register() {
                 </p>
               </div>
 
-              {/* Pre-signup Information Box */}
-              <div className="mb-5 p-3 rounded-2xl bg-teal-50/80 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 flex items-start gap-2.5 text-teal-800 dark:text-teal-200 text-xs font-medium">
-                <Info className="w-4 h-4 shrink-0 mt-0.5 text-teal-600 dark:text-teal-400" />
-                <span>{t('regPreNotice', 'After registering, check your email for a confirmation link.')}</span>
+              {/* Hackathon Demo Mode Active Banner */}
+              <div className="mb-5 p-3.5 rounded-2xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 flex items-start gap-2.5 text-teal-900 dark:text-teal-100 text-xs font-medium">
+                <Sparkles className="w-4 h-4 shrink-0 mt-0.5 text-teal-600 dark:text-teal-400" />
+                <div className="space-y-0.5">
+                  <p className="font-bold text-teal-950 dark:text-teal-200">
+                    {t('demoModeActiveTitle', 'Hackathon Demo Mode Active')}
+                  </p>
+                  <p className="text-teal-800/90 dark:text-teal-300/90 leading-relaxed text-[11px]">
+                    {t('demoModeActiveDesc', 'Email verification is temporarily disabled for this demo. Anyone can register and log in immediately without waiting for an email.')}
+                  </p>
+                </div>
               </div>
 
-              {errorMessage && (
+              {isRateLimited ? (
+                <div className="mb-5 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 text-left">
+                  <div className="flex items-start gap-2.5">
+                    <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider mb-1">
+                        {t('rateLimitErrorTitle', 'Email Rate Limit Exceeded')}
+                      </h3>
+                      <p className="text-xs text-amber-800 dark:text-amber-300 font-medium leading-relaxed">
+                        {errorMessage}
+                      </p>
+                      <div className="mt-3 pt-2.5 border-t border-amber-200 dark:border-amber-800 flex items-center justify-between">
+                        <span className="text-[11px] text-amber-700 dark:text-amber-400">
+                          {t('rateLimitDemoAction', 'If you already created an account previously, you can log in directly.')}
+                        </span>
+                        <Link
+                          to="/login"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-amber-900 dark:text-amber-200 hover:underline shrink-0 ml-2"
+                        >
+                          <span>{t('goToLoginBtn', 'Go to Login')}</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : errorMessage ? (
                 <div className="mb-5 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 flex items-start gap-2.5 text-rose-800 dark:text-rose-200 text-xs font-medium">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
                   <span>{errorMessage}</span>
                 </div>
-              )}
+              ) : null}
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Full Name */}

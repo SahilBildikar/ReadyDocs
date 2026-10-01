@@ -63,3 +63,11 @@ cp .env.example .env
 npm run dev
 ```
 The client will run on `http://localhost:5173`.
+
+---
+
+## Production Email Configuration (Custom SMTP)
+
+ReadyDocs uses Supabase Auth with email confirmation. Supabase's default built-in mailer is restricted to ~2-3 emails/hour on free tier projects. For production deployment, set up a custom SMTP provider (recommended: **Resend**) directly in the Supabase Dashboard.
+
+👉 **Full Setup Guide**: See [docs/PRODUCTION_SMTP_SETUP.md](file:///c:/Users/Sahil/ReadyDocs/docs/PRODUCTION_SMTP_SETUP.md) for step-by-step instructions on configuring Resend, domain verification (DKIM/SPF), environment variable security, and testing checklists.
