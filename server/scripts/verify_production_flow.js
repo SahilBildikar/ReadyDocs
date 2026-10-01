@@ -1,8 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const SUPABASE_URL = 'https://lltmrhqfzbxgdoekgvhl.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsdG1yaHFmemJ4Z2RvZWtndmhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2NTU3NDksImV4cCI6MjEwNjIzMTc0OX0.kGThRRJD-WPqpv8m3nhigz8MB27yLYZzEjVDhQvyr18';
-const SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsdG1yaHFmemJ4Z2RvZWtndmhsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MDY1NTc0OSwiZXhwIjoyMTA2MjMxNzQ5fQ.CkJAH_Als8Dzxv5TJzouew9vrjnMpL-GqDvr_uo-nNI';
+try {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  dotenv.config({ path: path.join(__dirname, '../.env') });
+} catch (_) {}
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);

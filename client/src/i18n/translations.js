@@ -215,6 +215,15 @@ export const translations = {
     markAsMissingBtn: 'Mark as Missing',
     closeBtn: 'Close',
     loadingGuidelines: 'Loading official procedure guidelines...',
+    officialGovAuthority: 'Official Government Authority',
+    acceptedAlternativesHeading: 'Accepted Alternatives',
+    updateStatusLabel: 'Update Checklist Status:',
+    iHaveStartedApplying: 'I have started applying',
+    iHaveThisDocNow: 'I have this document now',
+    documentStatusUpdatedToast: 'Document status updated.',
+    noGuideAvailable: 'No guide content available for this document.',
+    disclaimerLabel: 'Disclaimer:',
+    defaultDisclaimer: 'Rules, fees, and processing times can change. Please verify on the official portal.',
 
     // --- Privacy Notice ---
     privacyNoticeTitle: 'Mandatory Privacy & Document Security Notice',
@@ -545,6 +554,15 @@ export const translations = {
     markAsMissingBtn: 'अनुपलब्ध के रूप में चिह्नित करें',
     closeBtn: 'बंद करें',
     loadingGuidelines: 'आधिकारिक प्रक्रिया दिशानिर्देश लोड हो रहे हैं...',
+    officialGovAuthority: 'अधिकृत सरकारी प्राधिकरण',
+    acceptedAlternativesHeading: 'स्वीकार्य विकल्प',
+    updateStatusLabel: 'चेकलिस्ट स्थिति अपडेट करें:',
+    iHaveStartedApplying: 'मैंने आवेदन करना शुरू कर दिया है',
+    iHaveThisDocNow: 'मेरे पास यह दस्तावेज़ है',
+    documentStatusUpdatedToast: 'दस्तावेज़ की स्थिति अपडेट की गई।',
+    noGuideAvailable: 'इस दस्तावेज़ के लिए कोई मार्गदर्शिका उपलब्ध नहीं है।',
+    disclaimerLabel: 'अस्वीकरण:',
+    defaultDisclaimer: 'नियम, शुल्क और प्रसंस्करण समय बदल सकते हैं। कृपया आधिकारिक पोर्टल पर पुष्टि करें।',
 
     // --- Privacy Notice ---
     privacyNoticeTitle: 'अनिवार्य गोपनीयता और दस्तावेज़ सुरक्षा सूचना',
@@ -875,6 +893,15 @@ export const translations = {
     markAsMissingBtn: 'गहाळ म्हणून चिन्हांकित करा',
     closeBtn: 'बंद करा',
     loadingGuidelines: 'अधिकृत प्रक्रिया मार्गदर्शक तत्त्वे लोड होत आहेत...',
+    officialGovAuthority: 'अधिकृत शासकीय प्राधिकरण',
+    acceptedAlternativesHeading: 'स्वीकार्य पर्याय',
+    updateStatusLabel: 'चेकलिस्ट स्थिती अपडेट करा:',
+    iHaveStartedApplying: 'मी अर्ज करण्यास सुरुवात केली आहे',
+    iHaveThisDocNow: 'माझ्याकडे आता हे कागदपत्र आहे',
+    documentStatusUpdatedToast: 'कागदपत्र स्थिती अपडेट केली.',
+    noGuideAvailable: 'या कागदपत्रासाठी कोणतीही मार्गदर्शिका उपलब्ध नाही.',
+    disclaimerLabel: 'अस्वीकरण:',
+    defaultDisclaimer: 'नियम, शुल्क आणि प्रक्रिया वेळ बदलू शकतात. कृपया अधिकृत पोर्टलवर पडताळणी करा.',
 
     // --- Privacy Notice ---
     privacyNoticeTitle: 'अनिवार्य गोपनीयता आणि कागदपत्र सुरक्षा सूचना',
