@@ -335,7 +335,9 @@ export const translations = {
     createChecklistCTA: 'Create New Checklist',
     docsMatchedCount: '{matched} / {total} Documents Matched',
     openChecklistBtn: 'Open',
-    deleteChecklistConfirm: 'Are you sure you want to delete this checklist? All uploaded document associations will also be removed.'
+    deleteChecklistConfirm: 'Are you sure you want to delete this checklist? All uploaded document associations will also be removed.',
+    deleteChecklistTitle: 'Delete Checklist?',
+    checklistDeletedToast: 'Checklist deleted successfully.'
   },
 
   hi: {
@@ -674,7 +676,9 @@ export const translations = {
     createChecklistCTA: 'नई चेकलिस्ट बनाएं',
     docsMatchedCount: '{total} में से {matched} दस्तावेज़ सत्यापित',
     openChecklistBtn: 'खोलें',
-    deleteChecklistConfirm: 'क्या आप वाकई इस चेकलिस्ट को हटाना चाहते हैं? सभी जुड़े हुए दस्तावेज़ भी हटा दिए जाएंगे।'
+    deleteChecklistConfirm: 'क्या आप वाकई इस चेकलिस्ट को हटाना चाहते हैं? सभी जुड़े हुए दस्तावेज़ भी हटा दिए जाएंगे।',
+    deleteChecklistTitle: 'चेकलिस्ट हटाएं?',
+    checklistDeletedToast: 'चेकलिस्ट सफलतापूर्वक हटा दी गई।'
   },
 
   mr: {
@@ -1013,6 +1017,8 @@ export const translations = {
     createChecklistCTA: 'नवीन चेकलिस्ट तयार करा',
     docsMatchedCount: '{total} पैकी {matched} कागदपत्रे जुळली',
     openChecklistBtn: 'उघडा',
-    deleteChecklistConfirm: 'तुम्हाला खात्री आहे की तुम्ही ही चेकलिस्ट हटवू इच्छिता? सर्व जोडलेली कागदपत्रे देखील काढून टाकली जातील.'
+    deleteChecklistConfirm: 'तुम्हाला खात्री आहे की तुम्ही ही चेकलिस्ट हटवू इच्छिता? सर्व जोडलेली कागदपत्रे देखील काढून टाकली जातील.',
+    deleteChecklistTitle: 'चेकलिस्ट हटवा?',
+    checklistDeletedToast: 'चेकलिस्ट यशस्वीरित्या हटवली.'
   }
 };

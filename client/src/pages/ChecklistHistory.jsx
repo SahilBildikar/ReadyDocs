@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import ConfirmModal from '../components/ConfirmModal';
 import { useLanguage } from '../context/LanguageContext';
 import { fetchChecklists, deleteChecklist } from '../services/checklistApi';
 import { 
@@ -32,6 +33,19 @@ export default function ChecklistHistory() {
   const [selectedService, setSelectedService] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
+  // Delete Confirmation Modal & Toast states
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    checklistId: null,
+    isProcessing: false
+  });
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
   const loadChecklists = async () => {
     try {
       setIsLoading(true);
@@ -59,18 +73,32 @@ export default function ChecklistHistory() {
     loadChecklists();
   };
 
-  const handleDelete = async (e, id) => {
+  const handlePromptDelete = (e, id) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!window.confirm(t('deleteChecklistConfirm', 'Are you sure you want to delete this checklist? All uploaded document associations will also be removed.'))) {
-      return;
-    }
+    setError(null);
+    setDeleteModal({
+      isOpen: true,
+      checklistId: id,
+      isProcessing: false
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.checklistId) return;
+
+    setDeleteModal((prev) => ({ ...prev, isProcessing: true }));
+    setError(null);
 
     try {
-      await deleteChecklist(id);
-      setChecklists(prev => prev.filter(c => c.id !== id));
+      await deleteChecklist(deleteModal.checklistId);
+      setChecklists((prev) => prev.filter((c) => c.id !== deleteModal.checklistId));
+      showToast(t('checklistDeletedToast', 'Checklist deleted successfully.'));
+      setDeleteModal({ isOpen: false, checklistId: null, isProcessing: false });
     } catch (err) {
-      alert(err.message || 'Failed to delete checklist');
+      console.error('Failed to delete checklist:', err);
+      setError(err.message || 'Failed to delete checklist');
+      setDeleteModal((prev) => ({ ...prev, isProcessing: false, isOpen: false }));
     }
   };
 
@@ -269,9 +297,10 @@ export default function ChecklistHistory() {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={(e) => handleDelete(e, c.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                        onClick={(e) => handlePromptDelete(e, c.id)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
                         title={t('delete', 'Delete')}
+                        aria-label={t('delete', 'Delete')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -288,6 +317,27 @@ export default function ChecklistHistory() {
           </div>
         )}
       </main>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        type="danger"
+        title={t('deleteChecklistTitle', 'Delete Checklist?')}
+        message={t('deleteChecklistConfirm', 'Are you sure you want to delete this checklist? All uploaded document associations will also be removed.')}
+        confirmText={t('optYes', 'Yes')}
+        cancelText={t('cancel', 'Cancel')}
+        isProcessing={deleteModal.isProcessing}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteModal({ isOpen: false, checklistId: null, isProcessing: false })}
+      />
+
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white dark:bg-teal-600 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-xs font-bold animate-in fade-in slide-in-from-bottom-4">
+          <CheckCircle2 className="w-4 h-4 text-teal-400 dark:text-white shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
 
       <footer className="border-t border-slate-200 dark:border-slate-800 py-4 text-center text-xs text-slate-500 dark:text-slate-400">
         ReadyDocs • Intelligent Document Processing • “One visit is enough.”
