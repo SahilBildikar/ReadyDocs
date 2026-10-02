@@ -36,8 +36,11 @@ import {
   Clock, 
   Compass,
   RotateCcw,
-  Loader2
+  Loader2,
+  FileQuestion,
+  Plus
 } from 'lucide-react';
+import { profileApi } from '../services/profileApi';
 
 const GENERATION_TEXTS = {
   en: {
@@ -80,6 +83,8 @@ export default function ChecklistGenerator() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [selectedProfileId, setSelectedProfileId] = useState(activeProfile?.id || '');
+  const [noChecklistFound, setNoChecklistFound] = useState(false);
+  const [isCreatingSbiChecklist, setIsCreatingSbiChecklist] = useState(false);
 
   // Result state
   const [generatedChecklist, setGeneratedChecklist] = useState(null);
@@ -107,6 +112,7 @@ export default function ChecklistGenerator() {
   useEffect(() => {
     if (actionParam === 'upload') return;
 
+    setNoChecklistFound(false);
     setCurrentStepIndex(0);
     setAnswers({});
     setGeneratedChecklist(null);
@@ -134,13 +140,14 @@ export default function ChecklistGenerator() {
   }, [actionParam, serviceParam, t]);
 
   // Direct Upload & Scan Entry Point Handler:
-  // Clears previous questionnaire/guide state and immediately routes to the active checklist's upload flow
+  // Clears previous questionnaire/guide state and routes to existing checklist or shows friendly no-checklist screen
   useEffect(() => {
     if (actionParam !== 'upload') return;
     if (isProfilesLoading) return; // Wait for profile initialization if loading
 
     let isMounted = true;
     setError(null);
+    setNoChecklistFound(false);
 
     // Clear any previous checklist-generator, guide-chooser, or questionnaire state
     setAnswers({});
@@ -181,25 +188,10 @@ export default function ChecklistGenerator() {
           return;
         }
 
-        // 3. In a fresh session with no checklists yet, auto-create a starter checklist for the active profile
-        const preview = await generateChecklist({
-          serviceType: 'sbi_savings',
-          profileId: profId,
-          answers: {}
-        });
-        if (!isMounted) return;
-
-        const saved = await saveChecklist({
-          serviceType: 'sbi_savings',
-          profileId: profId,
-          institutionName: preview.service.institution,
-          sourceUrl: preview.service.sourceUrl,
-          answers: {},
-          items: preview.items
-        });
-        if (!isMounted) return;
-
-        navigate(`/checklists/${saved.id}`, { replace: true });
+        // 3. If no checklist exists, show the clear, friendly upload-entry screen
+        if (isMounted) {
+          setNoChecklistFound(true);
+        }
       } catch (err) {
         console.error('Failed to resolve upload entry point:', err);
         if (isMounted) {
@@ -227,8 +219,69 @@ export default function ChecklistGenerator() {
   const isProfileStep = currentStepIndex === questions.length;
   const currentQuestion = questions[currentStepIndex];
 
+  const handleCreateSbiChecklist = async () => {
+    setIsCreatingSbiChecklist(true);
+    setError(null);
+    try {
+      let profId = selectedProfileId || activeProfile?.id || (profiles.length > 0 ? profiles[0].id : null);
+      if (!profId) {
+        try {
+          const res = await profileApi.getAll();
+          if (res.profiles && res.profiles.length > 0) {
+            profId = res.profiles[0].id;
+          } else {
+            const created = await profileApi.create({
+              profile_name: 'Primary Profile',
+              full_name: 'My Profile',
+              relationship: 'self'
+            });
+            profId = created.profile?.id || created.id;
+          }
+        } catch (_) {}
+      }
+
+      // 1. Generate tailored items from trusted rules for SBI savings
+      const preview = await generateChecklist({
+        serviceType: 'sbi_savings',
+        profileId: profId,
+        answers: {}
+      });
+
+      // 2. Save checklist into database
+      const saved = await saveChecklist({
+        serviceType: 'sbi_savings',
+        profileId: profId,
+        institutionName: preview.service.institution,
+        sourceUrl: preview.service.sourceUrl,
+        answers: {},
+        items: preview.items
+      });
+
+      navigate(`/checklists/${saved.id}`, { replace: true });
+    } catch (err) {
+      console.error('Failed to create SBI checklist:', err);
+      setError(err.message || 'Unable to create SBI checklist. Please try again.');
+    } finally {
+      setIsCreatingSbiChecklist(false);
+    }
+  };
+
+  const handleChooseAnotherService = () => {
+    setNoChecklistFound(false);
+    setAnswers({});
+    setCurrentStepIndex(0);
+    setGeneratedChecklist(null);
+    setSavedChecklistRecord(null);
+    setSelectedServiceId(null);
+    setGenerationError(null);
+    setActiveHelpGuide(null);
+    setError(null);
+    navigate('/checklists/new', { replace: true });
+  };
+
   const handleActionSelect = (serviceId) => {
     setSelectedServiceId(serviceId);
+    setNoChecklistFound(false);
     setCurrentStepIndex(0);
     setAnswers({});
     setGeneratedChecklist(null);
@@ -533,8 +586,8 @@ export default function ChecklistGenerator() {
         {/* ========================================================================= */}
         {/* SCREEN 0: UPLOAD FLOW RESOLUTION (DIRECT UPLOAD & SCAN ENTRY POINT)       */}
         {/* ========================================================================= */}
-        {actionParam === 'upload' && (
-          <div className="py-20 text-center max-w-md mx-auto">
+        {actionParam === 'upload' && !noChecklistFound && (
+          <div className="py-20 text-center max-w-md mx-auto min-w-0">
             <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center mx-auto mb-4 animate-pulse">
               <Loader2 className="w-6 h-6 animate-spin text-teal-600 dark:text-teal-400" />
             </div>
@@ -544,6 +597,53 @@ export default function ChecklistGenerator() {
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {t('actionUploadDesc', 'Instant Gemini AI document classification, clarity check, and matching.')}
             </p>
+          </div>
+        )}
+
+        {actionParam === 'upload' && noChecklistFound && (
+          <div className="py-12 sm:py-16 max-w-xl mx-auto px-4 min-w-0">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-10 shadow-xs text-center min-w-0 max-w-full">
+              <div className="w-16 h-16 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center mx-auto mb-5 border border-teal-200 dark:border-teal-800">
+                <FileQuestion className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-3 break-words">
+                {t('noChecklistFoundTitle', 'No checklist found')}
+              </h2>
+              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mb-8 max-w-md mx-auto leading-relaxed break-words">
+                {t('noChecklistFoundDesc', 'Create a checklist to upload and match your documents.')}
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full min-w-0 max-w-full">
+                <button
+                  type="button"
+                  onClick={handleCreateSbiChecklist}
+                  disabled={isCreatingSbiChecklist}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm shadow-xs transition cursor-pointer disabled:opacity-60 max-w-full"
+                >
+                  {isCreatingSbiChecklist ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      <span>{t('creatingSbiChecklist', 'Creating SBI Checklist...')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 shrink-0" />
+                      <span>{t('createSbiSavingsChecklistBtn', 'Create SBI Savings Checklist')}</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleChooseAnotherService}
+                  disabled={isCreatingSbiChecklist}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 font-bold text-sm transition cursor-pointer max-w-full"
+                >
+                  <span>{t('chooseAnotherServiceBtn', 'Choose another service')}</span>
+                  <ArrowRight className="w-4 h-4 shrink-0" />
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
