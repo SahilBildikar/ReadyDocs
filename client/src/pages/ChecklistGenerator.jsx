@@ -7,6 +7,7 @@ import PrivacyBanner from '../components/PrivacyBanner';
 import DocumentHelpGuide from '../components/DocumentHelpGuide';
 import { 
   fetchServices, 
+  fetchChecklists,
   generateChecklist, 
   saveChecklist,
   updateChecklistItemStatus
@@ -68,7 +69,7 @@ export default function ChecklistGenerator() {
   const actionParam = searchParams.get('action'); // 'bank' | 'college' | 'insurance' | 'upload'
   const serviceParam = searchParams.get('service'); // 'sbi_savings' | 'sppu_admission' | 'insurance_claim'
 
-  const { profiles, activeProfile, setActiveProfile } = useProfile();
+  const { profiles, activeProfile, setActiveProfile, isLoading: isProfilesLoading } = useProfile();
   const { isSeniorMode, t, language } = useLanguage();
 
   const activeLang = language === 'hi' || language === 'mr' ? language : 'en';
@@ -98,16 +99,30 @@ export default function ChecklistGenerator() {
       case 'bank': return 'sbi_savings';
       case 'college': return 'sppu_admission';
       case 'insurance': return 'insurance_claim';
-      case 'upload': return 'sbi_savings';
       default: return null;
     }
   };
 
+  // Standard Service & Questionnaire Loader: reset wizard state on route change
   useEffect(() => {
+    if (actionParam === 'upload') return;
+
+    setCurrentStepIndex(0);
+    setAnswers({});
+    setGeneratedChecklist(null);
+    setSavedChecklistRecord(null);
+    setError(null);
+    setGenerationError(null);
+    setActiveHelpGuide(null);
+
+    const resolvedId = serviceParam || mapActionToServiceId(actionParam);
+    if (!resolvedId) {
+      setSelectedServiceId(null);
+    }
+
     fetchServices()
       .then((data) => {
         setServices(data);
-        const resolvedId = serviceParam || mapActionToServiceId(actionParam);
         if (resolvedId && data.some(s => s.id === resolvedId)) {
           setSelectedServiceId(resolvedId);
         }
@@ -117,6 +132,88 @@ export default function ChecklistGenerator() {
         setError(t('serverNotRunningError', 'Could not connect to service definitions. Please ensure the backend is running.'));
       });
   }, [actionParam, serviceParam, t]);
+
+  // Direct Upload & Scan Entry Point Handler:
+  // Clears previous questionnaire/guide state and immediately routes to the active checklist's upload flow
+  useEffect(() => {
+    if (actionParam !== 'upload') return;
+    if (isProfilesLoading) return; // Wait for profile initialization if loading
+
+    let isMounted = true;
+    setError(null);
+
+    // Clear any previous checklist-generator, guide-chooser, or questionnaire state
+    setAnswers({});
+    setCurrentStepIndex(0);
+    setGeneratedChecklist(null);
+    setSavedChecklistRecord(null);
+    setSelectedServiceId(null);
+    setGenerationError(null);
+    setActiveHelpGuide(null);
+
+    const resolveUploadFlow = async () => {
+      try {
+        const profId = selectedProfileId || activeProfile?.id || (profiles.length > 0 ? profiles[0].id : null);
+        if (!profId && profiles.length === 0) {
+          if (isMounted) {
+            navigate('/profiles', { replace: true });
+          }
+          return;
+        }
+
+        // 1. Fetch user's existing checklists
+        const userChecklists = await fetchChecklists();
+        if (!isMounted) return;
+
+        let targetChecklist = null;
+        if (userChecklists && userChecklists.length > 0) {
+          if (profId) {
+            targetChecklist = userChecklists.find(c => c.profile_id === profId);
+          }
+          if (!targetChecklist) {
+            targetChecklist = userChecklists[0];
+          }
+        }
+
+        // 2. If a checklist exists, route directly to its document upload & scanning flow
+        if (targetChecklist?.id) {
+          navigate(`/checklists/${targetChecklist.id}`, { replace: true });
+          return;
+        }
+
+        // 3. In a fresh session with no checklists yet, auto-create a starter checklist for the active profile
+        const preview = await generateChecklist({
+          serviceType: 'sbi_savings',
+          profileId: profId,
+          answers: {}
+        });
+        if (!isMounted) return;
+
+        const saved = await saveChecklist({
+          serviceType: 'sbi_savings',
+          profileId: profId,
+          institutionName: preview.service.institution,
+          sourceUrl: preview.service.sourceUrl,
+          answers: {},
+          items: preview.items
+        });
+        if (!isMounted) return;
+
+        navigate(`/checklists/${saved.id}`, { replace: true });
+      } catch (err) {
+        console.error('Failed to resolve upload entry point:', err);
+        if (isMounted) {
+          setError(err.message || 'Unable to open document verification. Please try again.');
+        }
+      }
+    };
+
+    resolveUploadFlow();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [actionParam, isProfilesLoading, activeProfile?.id, selectedProfileId, profiles, navigate]);
 
   useEffect(() => {
     if (activeProfile && !selectedProfileId) {
@@ -133,10 +230,12 @@ export default function ChecklistGenerator() {
   const handleActionSelect = (serviceId) => {
     setSelectedServiceId(serviceId);
     setCurrentStepIndex(0);
+    setAnswers({});
     setGeneratedChecklist(null);
     setSavedChecklistRecord(null);
     setError(null);
     setGenerationError(null);
+    setActiveHelpGuide(null);
   };
 
   const handleAnswerSelect = (questionId, value) => {
@@ -155,6 +254,8 @@ export default function ChecklistGenerator() {
       setCurrentStepIndex(prev => prev - 1);
     } else {
       setSelectedServiceId(null);
+      setAnswers({});
+      navigate('/checklists/new', { replace: true });
     }
   };
 
@@ -430,9 +531,26 @@ export default function ChecklistGenerator() {
         )}
 
         {/* ========================================================================= */}
+        {/* SCREEN 0: UPLOAD FLOW RESOLUTION (DIRECT UPLOAD & SCAN ENTRY POINT)       */}
+        {/* ========================================================================= */}
+        {actionParam === 'upload' && (
+          <div className="py-20 text-center max-w-md mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <Loader2 className="w-6 h-6 animate-spin text-teal-600 dark:text-teal-400" />
+            </div>
+            <h3 className="font-bold text-base text-slate-900 dark:text-white">
+              {t('loadingChecklistHistory', 'Opening document verification hub...')}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {t('actionUploadDesc', 'Instant Gemini AI document classification, clarity check, and matching.')}
+            </p>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
         {/* SCREEN 1: ACTION SELECTOR ("What do you want to do?")                      */}
         {/* ========================================================================= */}
-        {!selectedServiceId && (
+        {actionParam !== 'upload' && !selectedServiceId && (
           <div>
             <div className="text-center max-w-xl mx-auto mb-8">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 mb-3">
@@ -550,7 +668,7 @@ export default function ChecklistGenerator() {
         {/* ========================================================================= */}
         {/* SCREEN 2: 1-QUESTION-AT-A-TIME WIZARD (Before Final Checklist)            */}
         {/* ========================================================================= */}
-        {selectedServiceId && !generatedChecklist && currentService && (
+        {actionParam !== 'upload' && selectedServiceId && !generatedChecklist && currentService && (
           <div className="max-w-2xl mx-auto">
             {/* Top Wizard Navigation & Progress Indicator */}
             <div className="mb-6">
@@ -859,7 +977,7 @@ export default function ChecklistGenerator() {
         {/* ========================================================================= */}
         {/* SCREEN 3: FINAL PERSONALIZED CHECKLIST RESULT                             */}
         {/* ========================================================================= */}
-        {generatedChecklist && savedChecklistRecord && (
+        {actionParam !== 'upload' && generatedChecklist && savedChecklistRecord && (
           <div className="space-y-6">
             {/* Header Banner */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs max-w-full min-w-0">
@@ -1001,6 +1119,9 @@ export default function ChecklistGenerator() {
                     setGeneratedChecklist(null);
                     setSavedChecklistRecord(null);
                     setSelectedServiceId(null);
+                    setAnswers({});
+                    setCurrentStepIndex(0);
+                    navigate('/checklists/new', { replace: true });
                   }}
                   className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 transition cursor-pointer"
                 >
