@@ -7,7 +7,14 @@ const ProfileContext = createContext(null);
 export function ProfileProvider({ children }) {
   const { isAuthenticated } = useAuth();
 
-  const [profiles, setProfiles] = useState([]);
+  const [profiles, setProfiles] = useState(() => {
+    try {
+      const saved = localStorage.getItem('readydocs_profiles_cache');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [archivedProfiles, setArchivedProfiles] = useState([]);
   const [activeProfile, setActiveProfileState] = useState(() => {
     try {
@@ -18,7 +25,14 @@ export function ProfileProvider({ children }) {
     }
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(() => {
+    try {
+      const saved = localStorage.getItem('readydocs_profiles_cache');
+      return !saved;
+    } catch {
+      return false;
+    }
+  });
   const [error, setError] = useState(null);
 
   const fetchProfiles = useCallback(async () => {
@@ -26,6 +40,10 @@ export function ProfileProvider({ children }) {
       setProfiles([]);
       setArchivedProfiles([]);
       setActiveProfileState(null);
+      try {
+        localStorage.removeItem('readydocs_profiles_cache');
+        localStorage.removeItem('readydocs_active_profile');
+      } catch (_) {}
       return;
     }
 
@@ -38,16 +56,39 @@ export function ProfileProvider({ children }) {
       const activeList = all.filter((p) => !p.is_archived);
       const archivedList = all.filter((p) => p.is_archived);
 
-      setProfiles(activeList);
-      setArchivedProfiles(archivedList);
-
       // Determine active profile:
-      // 1. Profile with is_active === true
-      // 2. Or the first active profile if none has is_active
+      // 1. Profile with is_active === true from server
+      // 2. Or the previously saved active profile if it exists in activeList
+      // 3. Or the first active profile if none has is_active
       let currentActive = activeList.find((p) => p.is_active);
+      if (!currentActive) {
+        const savedId = activeProfile?.id || (() => {
+          try {
+            const saved = localStorage.getItem('readydocs_active_profile');
+            return saved ? JSON.parse(saved)?.id : null;
+          } catch {
+            return null;
+          }
+        })();
+        if (savedId) {
+          currentActive = activeList.find((p) => p.id === savedId);
+        }
+      }
+
       if (!currentActive && activeList.length > 0) {
         currentActive = activeList[0];
       }
+
+      const enrichedActiveList = activeList.map((p) => ({
+        ...p,
+        is_active: currentActive ? p.id === currentActive.id : Boolean(p.is_active)
+      }));
+
+      setProfiles(enrichedActiveList);
+      setArchivedProfiles(archivedList);
+      try {
+        localStorage.setItem('readydocs_profiles_cache', JSON.stringify(enrichedActiveList));
+      } catch (_) {}
 
       if (currentActive) {
         setActiveProfileState(currentActive);
@@ -66,7 +107,7 @@ export function ProfileProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, activeProfile?.id]);
 
   useEffect(() => {
     fetchProfiles();
@@ -82,13 +123,17 @@ export function ProfileProvider({ children }) {
         localStorage.setItem('readydocs_active_profile', JSON.stringify(updatedProfile));
       } catch (_) {}
 
-      // Update active flags in memory
-      setProfiles((prev) =>
-        prev.map((p) => ({
+      // Update active flags in memory and cache
+      setProfiles((prev) => {
+        const next = prev.map((p) => ({
           ...p,
           is_active: p.id === id
-        }))
-      );
+        }));
+        try {
+          localStorage.setItem('readydocs_profiles_cache', JSON.stringify(next));
+        } catch (_) {}
+        return next;
+      });
 
       return updatedProfile;
     } catch (err) {

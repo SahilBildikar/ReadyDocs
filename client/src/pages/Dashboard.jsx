@@ -28,8 +28,26 @@ export default function Dashboard() {
   const { profiles, activeProfile, setActiveProfile, isLoading } = useProfile();
   const { t } = useLanguage();
 
-  const [backendStatus, setBackendStatus] = useState('Checking...');
-  const [isHealthy, setIsHealthy] = useState(false);
+  const [backendStatus, setBackendStatus] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('readydocs_api_health') || localStorage.getItem('readydocs_api_health');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.status || 'Checking...';
+      }
+    } catch (_) {}
+    return 'Checking...';
+  });
+  const [isHealthy, setIsHealthy] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('readydocs_api_health') || localStorage.getItem('readydocs_api_health');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return Boolean(parsed.isHealthy);
+      }
+    } catch (_) {}
+    return false;
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -44,14 +62,34 @@ export default function Dashboard() {
       })
       .then((data) => {
         if (isMounted) {
-          setBackendStatus(data.message || t('allSystemsGo', 'Operational'));
+          const statusMsg = data.message || t('allSystemsGo', 'Operational');
+          setBackendStatus(statusMsg);
           setIsHealthy(true);
+          try {
+            const healthPayload = JSON.stringify({
+              status: statusMsg,
+              isHealthy: true,
+              timestamp: Date.now()
+            });
+            sessionStorage.setItem('readydocs_api_health', healthPayload);
+            localStorage.setItem('readydocs_api_health', healthPayload);
+          } catch (_) {}
         }
       })
       .catch(() => {
         if (isMounted) {
-          setBackendStatus(t('serverNotRunningError', 'Backend server is not running. Please start the backend server and try again.'));
+          const errorMsg = t('serverNotRunningError', 'Backend server is not running. Please start the backend server and try again.');
+          setBackendStatus(errorMsg);
           setIsHealthy(false);
+          try {
+            const healthPayload = JSON.stringify({
+              status: errorMsg,
+              isHealthy: false,
+              timestamp: Date.now()
+            });
+            sessionStorage.setItem('readydocs_api_health', healthPayload);
+            localStorage.setItem('readydocs_api_health', healthPayload);
+          } catch (_) {}
         }
       });
 

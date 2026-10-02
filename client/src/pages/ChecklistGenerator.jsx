@@ -33,8 +33,34 @@ import {
   Share2, 
   Copy, 
   Clock, 
-  Compass 
+  Compass,
+  RotateCcw,
+  Loader2
 } from 'lucide-react';
+
+const GENERATION_TEXTS = {
+  en: {
+    loadingTitle: 'Preparing your personalized checklist…',
+    loadingSubtitle: 'Checking document requirements for your answers.',
+    failedTitle: 'Failed to generate personalized checklist',
+    failedMessage: 'Unable to generate checklist right now. Please check your connection and try again.',
+    retryBtn: 'Retry'
+  },
+  hi: {
+    loadingTitle: 'आपकी व्यक्तिगत चेकलिस्ट तैयार की जा रही है…',
+    loadingSubtitle: 'आपके उत्तरों के अनुसार दस्तावेज़ आवश्यकताओं की जाँच की जा रही है।',
+    failedTitle: 'व्यक्तिगत चेकलिस्ट बनाने में विफल',
+    failedMessage: 'चेकलिस्ट तैयार करने में असमर्थ। कृपया पुनः प्रयास करें।',
+    retryBtn: 'पुनः प्रयास करें'
+  },
+  mr: {
+    loadingTitle: 'तुमची वैयक्तिकृत चेकलिस्ट तयार केली जात आहे…',
+    loadingSubtitle: 'तुमच्या उत्तरांनुसार कागदपत्रांच्या आवश्यकता तपासत आहे.',
+    failedTitle: 'वैयक्तिकृत चेकलिस्ट तयार करण्यात अयशस्वी',
+    failedMessage: 'चेकलिस्ट तयार करण्यात अडचण आली. कृपया पुन्हा प्रयत्न करा.',
+    retryBtn: 'पुन्हा प्रयत्न करा'
+  }
+};
 
 export default function ChecklistGenerator() {
   const navigate = useNavigate();
@@ -44,6 +70,9 @@ export default function ChecklistGenerator() {
 
   const { profiles, activeProfile, setActiveProfile } = useProfile();
   const { isSeniorMode, t, language } = useLanguage();
+
+  const activeLang = language === 'hi' || language === 'mr' ? language : 'en';
+  const genTexts = GENERATION_TEXTS[activeLang];
 
   const [services, setServices] = useState([]);
   const [selectedServiceId, setSelectedServiceId] = useState(null);
@@ -57,6 +86,7 @@ export default function ChecklistGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [generationError, setGenerationError] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
 
   // Missing Document Help Guide Modal state
@@ -106,6 +136,7 @@ export default function ChecklistGenerator() {
     setGeneratedChecklist(null);
     setSavedChecklistRecord(null);
     setError(null);
+    setGenerationError(null);
   };
 
   const handleAnswerSelect = (questionId, value) => {
@@ -119,6 +150,7 @@ export default function ChecklistGenerator() {
   };
 
   const handlePrevStep = () => {
+    setGenerationError(null);
     if (currentStepIndex > 0) {
       setCurrentStepIndex(prev => prev - 1);
     } else {
@@ -245,6 +277,7 @@ export default function ChecklistGenerator() {
     setIsLoading(true);
     setIsSaving(true);
     setError(null);
+    setGenerationError(null);
 
     try {
       // 1. Generate tailored items from trusted rules
@@ -269,7 +302,8 @@ export default function ChecklistGenerator() {
       showToast(t('checklistResultBadge', 'Checklist personalized and safely saved!'));
     } catch (err) {
       console.error('Error generating checklist:', err);
-      setError(err.message || 'Failed to generate personalized checklist.');
+      const friendlyMsg = err.message || genTexts.failedMessage;
+      setGenerationError(friendlyMsg);
     } finally {
       setIsLoading(false);
       setIsSaving(false);
@@ -647,6 +681,30 @@ export default function ChecklistGenerator() {
                     </div>
                   )}
                 </div>
+              ) : isLoading ? (
+                /* Step Loading: Preparing personalized checklist */
+                <div className="py-12 px-4 flex flex-col items-center justify-center text-center animate-in fade-in duration-200">
+                  <div className="relative mb-6">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-teal-50 dark:bg-teal-950/60 border-2 border-teal-500/40 flex items-center justify-center shadow-inner">
+                      <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 text-teal-600 dark:text-teal-400 animate-spin" />
+                    </div>
+                  </div>
+                  <h3 className={`font-extrabold text-slate-900 dark:text-white mb-2 tracking-tight ${
+                    isSeniorMode ? 'text-2xl sm:text-3xl' : 'text-lg sm:text-xl'
+                  }`}>
+                    {genTexts.loadingTitle}
+                  </h3>
+                  <p className={`text-slate-600 dark:text-slate-400 max-w-md ${
+                    isSeniorMode ? 'text-base sm:text-lg font-semibold' : 'text-xs sm:text-sm font-medium'
+                  }`}>
+                    {genTexts.loadingSubtitle}
+                  </p>
+
+                  {/* Progress Indicator */}
+                  <div className="w-full max-w-xs mt-6 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-teal-500 via-teal-600 to-emerald-500 rounded-full animate-pulse w-3/4"></div>
+                  </div>
+                </div>
               ) : (
                 /* Step Final: Which saved profile should be used? */
                 <div>
@@ -712,6 +770,38 @@ export default function ChecklistGenerator() {
                     <Users className="w-3.5 h-3.5" />
                     <span>{t('createProfileInstead', 'Create a new profile instead')}</span>
                   </Link>
+
+                  {/* Failure State & Retry Banner */}
+                  {generationError && (
+                    <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in duration-200">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className={`font-bold text-rose-900 dark:text-rose-200 ${
+                            isSeniorMode ? 'text-base sm:text-lg' : 'text-sm'
+                          }`}>
+                            {genTexts.failedTitle}
+                          </h4>
+                          <p className={`text-rose-700 dark:text-rose-300 mt-0.5 font-medium ${
+                            isSeniorMode ? 'text-sm' : 'text-xs'
+                          }`}>
+                            {generationError}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleGenerateAndSave}
+                        disabled={isLoading}
+                        className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs transition cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          isSeniorMode ? 'min-h-[48px] text-sm' : ''
+                        }`}
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span>{genTexts.retryBtn}</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -720,7 +810,8 @@ export default function ChecklistGenerator() {
                 <button
                   type="button"
                   onClick={handlePrevStep}
-                  className={`px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 transition cursor-pointer ${
+                  disabled={isLoading}
+                  className={`px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                     isSeniorMode ? 'min-h-[52px]' : ''
                   }`}
                 >
@@ -743,12 +834,15 @@ export default function ChecklistGenerator() {
                     type="button"
                     onClick={handleGenerateAndSave}
                     disabled={isLoading}
-                    className={`inline-flex items-center gap-2 px-7 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold text-sm shadow-md transition cursor-pointer ${
+                    className={`inline-flex items-center gap-2 px-7 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold text-sm shadow-md transition cursor-pointer ${
                       isSeniorMode ? 'min-h-[56px] text-base' : ''
                     }`}
                   >
                     {isLoading ? (
-                      <span>{t('generatingChecklistBtn', 'Generating Checklist...')}</span>
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        <span>{t('generatingChecklistBtn', 'Generating Checklist...')}</span>
+                      </>
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4 text-emerald-200" />
