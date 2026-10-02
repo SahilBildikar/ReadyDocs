@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from '../config/supabase.js';
+import { supabase, isSupabaseConfigured, createUserSupabaseClient } from '../config/supabase.js';
 import crypto from 'crypto';
 
 function assertSupabase() {
@@ -10,11 +10,18 @@ function assertSupabase() {
 export const ChecklistModel = {
   /**
    * List all checklists belonging to a specific user, with optional filters.
+   * Enforces Supabase PostgreSQL Row Level Security (RLS) via userToken and explicit user_id scoping.
    */
-  async listByUser(userId, { serviceType, status, search } = {}) {
+  async listByUser(userId, { serviceType, status, search } = {}, userToken = null) {
     assertSupabase();
 
-    let query = supabase
+    if (!userId) {
+      throw new Error('[Security] Valid userId required to list checklists');
+    }
+
+    const client = createUserSupabaseClient(userToken);
+
+    let query = client
       .from('checklists')
       .select(`
         *,
@@ -51,10 +58,13 @@ export const ChecklistModel = {
   /**
    * Get a single checklist by ID for a user.
    */
-  async getById(id, userId) {
+  async getById(id, userId, userToken = null) {
     assertSupabase();
+    if (!id || !userId) return null;
 
-    const { data, error } = await supabase
+    const client = createUserSupabaseClient(userToken);
+
+    const { data, error } = await client
       .from('checklists')
       .select(`
         *,
@@ -74,8 +84,11 @@ export const ChecklistModel = {
   /**
    * Create a new checklist for a user.
    */
-  async create({ userId, profileId, serviceType, institutionName, status = 'in_progress', resultJson, sourceUrl }) {
+  async create({ userId, profileId, serviceType, institutionName, status = 'in_progress', resultJson, sourceUrl }, userToken = null) {
     assertSupabase();
+    if (!userId) throw new Error('[Security] Valid userId required');
+
+    const client = createUserSupabaseClient(userToken);
 
     const newChecklist = {
       id: crypto.randomUUID(),
@@ -92,7 +105,7 @@ export const ChecklistModel = {
       updated_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('checklists')
       .insert([newChecklist])
       .select(`
@@ -112,15 +125,18 @@ export const ChecklistModel = {
   /**
    * Update checklist status or result_json.
    */
-  async update(id, userId, updates) {
+  async update(id, userId, updates, userToken = null) {
     assertSupabase();
+    if (!id || !userId) throw new Error('[Security] Valid id and userId required');
+
+    const client = createUserSupabaseClient(userToken);
 
     const updatedData = {
       ...updates,
       updated_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('checklists')
       .update(updatedData)
       .eq('id', id)
@@ -142,10 +158,13 @@ export const ChecklistModel = {
   /**
    * Delete a checklist for a user.
    */
-  async delete(id, userId) {
+  async delete(id, userId, userToken = null) {
     assertSupabase();
+    if (!id || !userId) throw new Error('[Security] Valid id and userId required');
 
-    const { error } = await supabase
+    const client = createUserSupabaseClient(userToken);
+
+    const { error } = await client
       .from('checklists')
       .delete()
       .eq('id', id)
@@ -159,3 +178,4 @@ export const ChecklistModel = {
     return true;
   }
 };
+

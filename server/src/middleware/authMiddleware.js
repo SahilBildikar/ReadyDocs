@@ -37,7 +37,12 @@ export const requireAuth = async (req, res, next) => {
       });
     }
 
-    // Attach user to request object using authentic Supabase auth.users ID
+    // Prevent browser and proxy caching of any user-authenticated data
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
+    // Attach user and verified token to request object
     req.user = {
       id: user.id,
       email: user.email,
@@ -46,6 +51,7 @@ export const requireAuth = async (req, res, next) => {
       createdAt: user.created_at,
       updatedAt: user.updated_at
     };
+    req.token = token;
 
     next();
   } catch (err) {

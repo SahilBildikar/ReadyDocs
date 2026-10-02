@@ -195,7 +195,7 @@ export const ChecklistController = {
         status: 'incomplete',
         resultJson,
         sourceUrl
-      });
+      }, req.token);
 
       return res.status(201).json({
         success: true,
@@ -217,6 +217,13 @@ export const ChecklistController = {
    */
   async updateItemStatus(req, res) {
     try {
+      if (!req.user?.id) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authenticated user session is required.'
+        });
+      }
+
       const { checklistId, itemId } = req.params;
 
       const parseResult = updateItemStatusSchema.safeParse(req.body);
@@ -230,7 +237,7 @@ export const ChecklistController = {
       const { status, notes } = parseResult.data;
 
       // Verify checklist ownership
-      const checklist = await ChecklistModel.getById(checklistId, req.user.id);
+      const checklist = await ChecklistModel.getById(checklistId, req.user.id, req.token);
       if (!checklist) {
         return res.status(404).json({
           error: 'Checklist Not Found',
@@ -282,7 +289,7 @@ export const ChecklistController = {
       const updatedChecklist = await ChecklistModel.update(checklistId, req.user.id, {
         status: newOverallStatus,
         result_json: updatedResultJson
-      });
+      }, req.token);
 
       return res.status(200).json({
         success: true,
@@ -304,13 +311,20 @@ export const ChecklistController = {
    */
   async listChecklists(req, res) {
     try {
+      if (!req.user?.id) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authenticated user session is required.'
+        });
+      }
+
       const { service_type, status, search } = req.query;
 
       const checklists = await ChecklistModel.listByUser(req.user.id, {
         serviceType: service_type,
         status,
         search
-      });
+      }, req.token);
 
       return res.status(200).json({
         success: true,
@@ -331,9 +345,16 @@ export const ChecklistController = {
    */
   async getChecklistById(req, res) {
     try {
+      if (!req.user?.id) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authenticated user session is required.'
+        });
+      }
+
       const { id } = req.params;
 
-      const checklist = await ChecklistModel.getById(id, req.user.id);
+      const checklist = await ChecklistModel.getById(id, req.user.id, req.token);
       if (!checklist) {
         return res.status(404).json({
           error: 'Checklist Not Found',
@@ -363,9 +384,16 @@ export const ChecklistController = {
    */
   async deleteChecklist(req, res) {
     try {
+      if (!req.user?.id) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authenticated user session is required.'
+        });
+      }
+
       const { id } = req.params;
 
-      const checklist = await ChecklistModel.getById(id, req.user.id);
+      const checklist = await ChecklistModel.getById(id, req.user.id, req.token);
       if (!checklist) {
         return res.status(404).json({
           error: 'Checklist Not Found',
@@ -373,7 +401,7 @@ export const ChecklistController = {
         });
       }
 
-      await ChecklistModel.delete(id, req.user.id);
+      await ChecklistModel.delete(id, req.user.id, req.token);
 
       return res.status(200).json({
         success: true,

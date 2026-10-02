@@ -6,10 +6,17 @@ async function getAuthHeader() {
   let token = null;
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    token = session?.access_token || localStorage.getItem('readydocs_token');
-  } catch {
-    token = localStorage.getItem('readydocs_token');
+    if (session?.access_token) {
+      token = session.access_token;
+    }
+  } catch (_) {}
+
+  if (!token) {
+    try {
+      token = localStorage.getItem('readydocs_token');
+    } catch (_) {}
   }
+
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -29,10 +36,16 @@ export async function fetchHelpGuide(guideId) {
 
 export async function generateChecklist({ serviceType, profileId, answers }) {
   const authHeaders = await getAuthHeader();
+  if (!authHeaders.Authorization) {
+    throw new Error('Authentication required to generate checklist');
+  }
+
   const res = await fetch(`${API_BASE_URL}/checklists/generate`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
       ...authHeaders
     },
     body: JSON.stringify({ serviceType, profileId, answers })
@@ -44,10 +57,16 @@ export async function generateChecklist({ serviceType, profileId, answers }) {
 
 export async function saveChecklist({ serviceType, profileId, institutionName, sourceUrl, answers, items }) {
   const authHeaders = await getAuthHeader();
+  if (!authHeaders.Authorization) {
+    throw new Error('Authentication required to save checklist');
+  }
+
   const res = await fetch(`${API_BASE_URL}/checklists`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
       ...authHeaders
     },
     body: JSON.stringify({ serviceType, profileId, institutionName, sourceUrl, answers, items })
@@ -59,10 +78,16 @@ export async function saveChecklist({ serviceType, profileId, institutionName, s
 
 export async function updateChecklistItemStatus({ checklistId, itemId, status, notes = null }) {
   const authHeaders = await getAuthHeader();
+  if (!authHeaders.Authorization) {
+    throw new Error('Authentication required to update item status');
+  }
+
   const res = await fetch(`${API_BASE_URL}/checklists/${checklistId}/items/${itemId}/status`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
       ...authHeaders
     },
     body: JSON.stringify({ status, notes })
@@ -79,8 +104,17 @@ export async function fetchChecklists({ serviceType = '', status = '', search = 
   if (search) params.append('search', search);
 
   const authHeaders = await getAuthHeader();
+  // If user is not authenticated, return zero checklists immediately to protect isolation
+  if (!authHeaders.Authorization) {
+    return [];
+  }
+
   const res = await fetch(`${API_BASE_URL}/checklists?${params.toString()}`, {
-    headers: authHeaders
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      ...authHeaders
+    }
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Failed to fetch checklists');
@@ -89,8 +123,16 @@ export async function fetchChecklists({ serviceType = '', status = '', search = 
 
 export async function fetchChecklistById(id) {
   const authHeaders = await getAuthHeader();
+  if (!authHeaders.Authorization) {
+    throw new Error('Authentication required to view checklist');
+  }
+
   const res = await fetch(`${API_BASE_URL}/checklists/${id}`, {
-    headers: authHeaders
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      ...authHeaders
+    }
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Failed to fetch checklist');
@@ -99,9 +141,17 @@ export async function fetchChecklistById(id) {
 
 export async function deleteChecklist(id) {
   const authHeaders = await getAuthHeader();
+  if (!authHeaders.Authorization) {
+    throw new Error('Authentication required to delete checklist');
+  }
+
   const res = await fetch(`${API_BASE_URL}/checklists/${id}`, {
     method: 'DELETE',
-    headers: authHeaders
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      ...authHeaders
+    }
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Failed to delete checklist');

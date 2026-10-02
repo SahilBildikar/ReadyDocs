@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ConfirmModal from '../components/ConfirmModal';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { fetchChecklists, deleteChecklist } from '../services/checklistApi';
 import { 
   CheckSquare, 
@@ -24,6 +25,7 @@ import {
 export default function ChecklistHistory() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { user, token, isInitializing, isAuthenticated } = useAuth();
   const [checklists, setChecklists] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,6 +49,12 @@ export default function ChecklistHistory() {
   };
 
   const loadChecklists = async () => {
+    if (!isAuthenticated || !user?.id) {
+      setChecklists([]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -55,7 +63,10 @@ export default function ChecklistHistory() {
         status: selectedStatus,
         search: searchTerm
       });
-      setChecklists(data);
+
+      // Strict user isolation verification: ensure all items belong to this user
+      const userScoped = (data || []).filter((c) => !c.user_id || c.user_id === user.id);
+      setChecklists(userScoped);
     } catch (err) {
       console.error('Failed to load checklists:', err);
       setError(err.message || 'Failed to load checklists');
@@ -65,8 +76,19 @@ export default function ChecklistHistory() {
   };
 
   useEffect(() => {
+    // Clear state on account switch or pending auth initialization
+    if (isInitializing) {
+      setIsLoading(true);
+      return;
+    }
+    if (!isAuthenticated || !user?.id) {
+      setChecklists([]);
+      setIsLoading(false);
+      return;
+    }
+
     loadChecklists();
-  }, [selectedService, selectedStatus]);
+  }, [user?.id, token, isInitializing, isAuthenticated, selectedService, selectedStatus]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();

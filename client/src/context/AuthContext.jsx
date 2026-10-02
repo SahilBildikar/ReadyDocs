@@ -19,6 +19,25 @@ export function AuthProvider({ children }) {
   const [isInitializing, setIsInitializing] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
 
+  // Helper to purge all user-scoped caches and tokens from storage
+  const clearAllUserData = () => {
+    try {
+      localStorage.removeItem('readydocs_token');
+      localStorage.removeItem('readydocs_user');
+      localStorage.removeItem('readydocs_active_profile');
+      localStorage.removeItem('readydocs_profiles_cache');
+      
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('readydocs_') && !key.includes('theme') && !key.includes('lang') && !key.includes('senior_mode'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+    } catch (_) {}
+  };
+
   // Sync Supabase Auth session on mount and listen to changes
   useEffect(() => {
     let isMounted = true;
@@ -29,17 +48,16 @@ export function AuthProvider({ children }) {
       if (error) {
         console.warn('[AuthContext] Error getting initial session:', error.message);
       }
-      if (session) {
+      if (session?.user) {
         const formatted = formatUser(session.user);
         setUser(formatted);
         setToken(session.access_token);
         localStorage.setItem('readydocs_token', session.access_token);
         localStorage.setItem('readydocs_user', JSON.stringify(formatted));
       } else {
+        clearAllUserData();
         setUser(null);
         setToken(null);
-        localStorage.removeItem('readydocs_token');
-        localStorage.removeItem('readydocs_user');
       }
       setIsInitializing(false);
     });
@@ -47,17 +65,22 @@ export function AuthProvider({ children }) {
     // 2. Subscribe to auth state updates (sign in, sign out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!isMounted) return;
-      if (session) {
+      if (session?.user) {
         const formatted = formatUser(session.user);
-        setUser(formatted);
+        setUser((prevUser) => {
+          // If the authenticated user ID changed, clear previous user's cached profile and checklist state
+          if (prevUser && prevUser.id !== formatted.id) {
+            clearAllUserData();
+          }
+          return formatted;
+        });
         setToken(session.access_token);
         localStorage.setItem('readydocs_token', session.access_token);
         localStorage.setItem('readydocs_user', JSON.stringify(formatted));
       } else {
+        clearAllUserData();
         setUser(null);
         setToken(null);
-        localStorage.removeItem('readydocs_token');
-        localStorage.removeItem('readydocs_user');
       }
       setIsInitializing(false);
     });
@@ -71,6 +94,9 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     setAuthLoading(true);
     try {
+      // Clear any prior user's cached state before logging in
+      clearAllUserData();
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -98,6 +124,9 @@ export function AuthProvider({ children }) {
   const register = useCallback(async (name, email, password) => {
     setAuthLoading(true);
     try {
+      // Clear any prior user's cached state before registering
+      clearAllUserData();
+
       const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined;
 
       const { data, error } = await supabase.auth.signUp({
@@ -198,12 +227,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      localStorage.removeItem('readydocs_token');
-      localStorage.removeItem('readydocs_user');
-      localStorage.removeItem('readydocs_active_profile');
-    } catch (_) {}
-
+    clearAllUserData();
     setUser(null);
     setToken(null);
 

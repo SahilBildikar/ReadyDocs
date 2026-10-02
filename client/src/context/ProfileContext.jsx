@@ -5,38 +5,30 @@ import { useAuth } from './AuthContext';
 const ProfileContext = createContext(null);
 
 export function ProfileProvider({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
-  const [profiles, setProfiles] = useState(() => {
-    try {
-      const saved = localStorage.getItem('readydocs_profiles_cache');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [profiles, setProfiles] = useState([]);
   const [archivedProfiles, setArchivedProfiles] = useState([]);
-  const [activeProfile, setActiveProfileState] = useState(() => {
-    try {
-      const saved = localStorage.getItem('readydocs_active_profile');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-
-  const [isLoading, setIsLoading] = useState(() => {
-    try {
-      const saved = localStorage.getItem('readydocs_profiles_cache');
-      return !saved;
-    } catch {
-      return false;
-    }
-  });
+  const [activeProfile, setActiveProfileState] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Clear in-memory and persisted profile state immediately whenever user changes or logs out
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) {
+      setProfiles([]);
+      setArchivedProfiles([]);
+      setActiveProfileState(null);
+      setIsLoading(false);
+      try {
+        localStorage.removeItem('readydocs_profiles_cache');
+        localStorage.removeItem('readydocs_active_profile');
+      } catch (_) {}
+    }
+  }, [isAuthenticated, user?.id]);
+
   const fetchProfiles = useCallback(async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user?.id) {
       setProfiles([]);
       setArchivedProfiles([]);
       setActiveProfileState(null);
@@ -107,7 +99,7 @@ export function ProfileProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, activeProfile?.id]);
+  }, [isAuthenticated, user?.id, activeProfile?.id]);
 
   useEffect(() => {
     fetchProfiles();
